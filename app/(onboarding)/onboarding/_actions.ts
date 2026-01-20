@@ -14,7 +14,12 @@ export async function completeOnboarding(formData: {
   const { userId } = await auth()
   const client = await clerkClient()
 
+  console.log('--- [DEBUG: completeOnboarding] ---')
+  console.log('User ID:', userId)
+  console.log('Requested Role:', formData.role)
+
   if (!userId) {
+    console.error('Error: No user ID found')
     return { error: 'No user ID found' }
   }
 
@@ -23,17 +28,22 @@ export async function completeOnboarding(formData: {
     const userEmail = user.emailAddresses[0]?.emailAddress
     const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
 
+    console.log('User Email:', userEmail)
+
     if (!userEmail) {
+      console.error('Error: User email not found')
       return { error: 'User email not found' }
     }
 
-    // 1. Update Clerk publicMetadata using service helper
-    const clerkResult = await updateUserRole(userId, formData.role)
-    if (clerkResult.error) {
-      return { error: clerkResult.error }
-    }
+    // 1. Update Clerk publicMetadata
+    await client.users.updateUserMetadata(userId, {
+      publicMetadata: {
+        role: formData.role,
+      },
+    })
+    console.log('Clerk Metadata Updated Successfully')
 
-    // 2. Sync with Supabase profiles table using server service
+    // 2. Sync with Supabase profiles table
     const supabase = await createClient()
     const { error: supabaseError } = await supabase
       .from('profiles')
@@ -47,10 +57,13 @@ export async function completeOnboarding(formData: {
       })
 
     if (supabaseError) {
-      console.error('Supabase sync error:', supabaseError)
+      console.error('Supabase Sync Error:', supabaseError.message)
+    } else {
+      console.log('Supabase Profile Synced Successfully')
     }
 
-    revalidatePath('/')
+    revalidatePath('/', 'layout')
+    console.log('Path revalidated. Returning success.')
     return { success: true }
   } catch (error) {
     console.error('Onboarding error:', error)
