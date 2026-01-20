@@ -108,3 +108,56 @@ export async function getEventById(id: string) {
 
   return { success: true, data }
 }
+
+export async function updateEvent(id: string, updates: any) {
+  const { userId } = await auth()
+  if (!userId) throw new Error('Unauthorized')
+
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('events')
+    .update({
+      title: updates.title,
+      description: updates.description,
+      location: updates.location,
+      start_time: updates.start_time,
+      end_time: updates.end_time,
+      capacity: updates.capacity,
+      is_accessible: updates.is_accessible,
+      status: updates.status
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('[ACTION ERROR] Failed to update event:', error.message)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath(`/staff/events/${id}`)
+  revalidatePath('/staff/events')
+  return { success: true, data }
+}
+
+export async function cancelEvent(id: string) {
+  const { userId } = await auth()
+  if (!userId) throw new Error('Unauthorized')
+
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('events')
+    .update({ status: 'cancelled' })
+    .eq('id', id)
+
+  if (error) {
+    console.error('[ACTION ERROR] Failed to cancel event:', error.message)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath(`/staff/events/${id}`)
+  revalidatePath('/staff/events')
+  return { success: true }
+}
