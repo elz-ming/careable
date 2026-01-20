@@ -4,7 +4,6 @@ import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@/lib/supabase/server'
 import { extractCalendarEvents, type CalendarExtraction } from '../lib/calendarExtractor'
 import { revalidatePath } from 'next/cache'
-import { v4 as uuidv4 } from 'uuid'
 
 export async function uploadAndExtractCalendar(formData: FormData) {
   const { userId } = await auth()
