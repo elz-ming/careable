@@ -23,8 +23,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { useRouter } from 'next/navigation'
 
 export default function EventsListPage() {
+  const router = useRouter()
   const [events, setEvents] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
@@ -50,6 +52,10 @@ export default function EventsListPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleEventClick = (id: string) => {
+    router.push(`/staff/events/${id}`)
   }
 
   const filteredAndSortedEvents = events
@@ -171,7 +177,11 @@ export default function EventsListPage() {
             /* Card View */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
               {filteredAndSortedEvents.map((event) => (
-                <Card key={event.id} className="group overflow-hidden rounded-3xl border-zinc-100 hover:border-[#E89D71]/30 hover:shadow-xl hover:shadow-[#E89D71]/5 transition-all duration-300 bg-white">
+                <Card 
+                  key={event.id} 
+                  onClick={() => handleEventClick(event.id)}
+                  className="group overflow-hidden rounded-3xl border-zinc-100 hover:border-[#E89D71]/30 hover:shadow-xl hover:shadow-[#E89D71]/5 transition-all duration-300 bg-white cursor-pointer"
+                >
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start gap-4">
                       <div className="space-y-1">
@@ -224,7 +234,11 @@ export default function EventsListPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredAndSortedEvents.map((event) => (
-                    <TableRow key={event.id} className="hover:bg-zinc-50/30 transition-colors group">
+                    <TableRow 
+                      key={event.id} 
+                      onClick={() => handleEventClick(event.id)}
+                      className="hover:bg-zinc-50/30 transition-colors group cursor-pointer"
+                    >
                       <TableCell className="py-4">
                         <div className="flex flex-col gap-0.5">
                           <span className="font-bold text-[#2D1E17] group-hover:text-[#E89D71] transition-colors">{event.title}</span>

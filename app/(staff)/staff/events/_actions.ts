@@ -88,3 +88,23 @@ export async function getEvents() {
 
   return { success: true, data }
 }
+
+export async function getEventById(id: string) {
+  const { userId } = await auth()
+  if (!userId) throw new Error('Unauthorized')
+
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    console.error('[ACTION ERROR] Failed to fetch event:', error.message)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true, data }
+}
