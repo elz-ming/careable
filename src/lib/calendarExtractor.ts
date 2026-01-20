@@ -14,6 +14,8 @@ export const CalendarEventSchema = z.object({
   start_time: z.string().nullable().describe("'HH:MM' 24h preferred"),
   end_time: z.string().nullable().describe("'HH:MM' 24h preferred"),
   location: z.string().nullable(),
+  location_region: z.enum(["Central", "East", "West", "North"]).nullable().describe("Singapore region based on location"),
+  event_category: z.enum(["Social Outing", "Arts & Crafts", "Life Skills", "Sports & Fitness", "Music Session"]).nullable().describe("Category of the event"),
   notes: z.string().nullable(),
   source_text: z.string().nullable().describe("short supporting snippet from the calendar cell/line")
 });
@@ -111,58 +113,12 @@ Rules:
 - date_iso must be YYYY-MM-DD ONLY when the date is explicit enough. If the year is missing or ambiguous, set date_iso=null and put the visible label in date_text.
 - start_time/end_time must be "HH:MM" when possible; if only "10am" is shown, convert to "10:00". If unclear, null.
 - location must be null unless explicitly present.
+- location_region: Based on the location mentioned, categorize into Singapore regions: "Central", "East", "West", or "North". If no location or cannot determine region, set to null. Examples: Orchard/City Hall = Central, Tampines/Bedok = East, Jurong/Clementi = West, Yishun/Woodlands = North.
+- event_category: Based on the event name and description, categorize as: "Social Outing" (gatherings, outings, meals), "Arts & Crafts" (painting, crafts, creative activities), "Life Skills" (cooking, financial literacy, daily living skills), "Sports & Fitness" (exercise, sports, physical activities), or "Music Session" (singing, music, dance). If unclear, set to null.
 - notes can include extra visible context like "Bring laptop", "TBC", etc.
 - source_text should be a short snippet copied/paraphrased from the calendar cell/line that supports the event.
 - Identify calendar_type as monthly_grid / weekly_grid / agenda_list / unknown.
 Output must be valid JSON strictly matching the provided schema. No markdown.`;
-
-    const result = await model.generateContent([
-      {
-        fileData: {
-          mimeType: file.mimeType,
-          fileUri: file.uri,
-        },
-      },
-      { text: prompt },
-    ]);
-
-    const responseText = result.response.text();
-    
-    // Defensive parsing for extra fencing
-    const cleanJson = responseText.replace(/^```json\n?/, "").replace(/\n?```$/, "").trim();
-    const parsed = JSON.parse(cleanJson);
-
-    // Sort events by date_iso/start_time
-    if (parsed.events && Array.isArray(parsed.events)) {
-      parsed.events.sort((a: any, b: any) => {
-        if (a.date_iso && b.date_iso) {
-          if (a.date_iso !== b.date_iso) return a.date_iso.localeCompare(b.date_iso);
-          return (a.start_time || "").localeCompare(b.start_time || "");
-        }
-        if (a.date_iso) return -1;
-        if (b.date_iso) return 1;
-        return 0;
-      });
-    }
-
-    // Ensure meta matches actual input
-    parsed.meta = {
-      ...parsed.meta,
-      source_filename: filename,
-      source_mime: originalMimeType,
-    };
-
-    return parsed;
-  } finally {
-    // Cleanup
-    try {
-      await fs.rm(tempDir, { recursive: true, force: true });
-    } catch (err) {
-      console.error("Cleanup error:", err);
-    }
-  }
-}
-
 
     const result = await model.generateContent([
       {
