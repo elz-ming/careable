@@ -107,7 +107,7 @@ Then, output exactly the string "[RESULT_START]" followed by the final result as
 Finally, output "[RESULT_END]".
 
 SCHEMA:
-${JSON.stringify(zodToJsonSchema(CalendarExtractionSchema))}
+${JSON.stringify(zodToJsonSchema(CalendarExtractionSchema as any))}
 
 Begin your reasoning now:`;
 
@@ -237,7 +237,7 @@ export async function extractCalendarEvents(input: ExtractionInput): Promise<Cal
 
     if (file.state === FileState.FAILED) throw new Error("Gemini file processing failed");
 
-    const jsonSchema: any = zodToJsonSchema(CalendarExtractionSchema);
+    const jsonSchema: any = zodToJsonSchema(CalendarExtractionSchema as any);
     const cleanSchema = { ...jsonSchema };
     delete cleanSchema.$schema;
     delete cleanSchema.definitions;
@@ -247,7 +247,7 @@ export async function extractCalendarEvents(input: ExtractionInput): Promise<Cal
       model: modelName,
       generationConfig: {
         responseMimeType: "application/json",
-        responseJsonSchema: cleanSchema as any,
+        responseSchema: cleanSchema as any,
         temperature: 0.1,
       },
     });
