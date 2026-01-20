@@ -111,15 +111,38 @@ ${JSON.stringify(zodToJsonSchema(CalendarExtractionSchema))}
 
 Begin your reasoning now:`;
 
-    const result = await model.generateContentStream([
-      {
-        fileData: {
-          mimeType: file.mimeType,
-          fileUri: file.uri,
-        },
-      },
-      { text: prompt },
-    ]);
+    // ADDED: Retry logic for 503 Overloaded errors
+    let result;
+    let retries = 0;
+    const maxRetries = 3;
+    
+    while (retries < maxRetries) {
+      try {
+        result = await model.generateContentStream([
+          {
+            fileData: {
+              mimeType: file.mimeType,
+              fileUri: file.uri,
+            },
+          },
+          { text: prompt },
+        ]);
+        // If we get here, the stream started successfully
+        break;
+      } catch (err: any) {
+        if (err.message?.includes("503") || err.message?.includes("overloaded")) {
+          retries++;
+          const delay = Math.pow(2, retries) * 1000; // Exponential backoff: 2s, 4s, 8s
+          console.warn(`[${correlationId}] [AUDIT] Model overloaded. Retrying in ${delay}ms... (Attempt ${retries}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          if (retries === maxRetries) throw err;
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    if (!result) throw new Error("Failed to initialize Gemini stream after retries.");
 
     let fullText = "";
     for await (const chunk of result.stream) {
@@ -133,8 +156,26 @@ Begin your reasoning now:`;
     const resultMatch = fullText.match(/\[RESULT_START\]([\s\S]*?)\[RESULT_END\]/);
     if (resultMatch) {
       try {
-        const jsonContent = resultMatch[1].trim();
+        let jsonContent = resultMatch[1].trim();
+        // Remove markdown code blocks if present
+        jsonContent = jsonContent.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+        
         const parsed = JSON.parse(jsonContent);
+        
+        // Comprehensive Normalization (Handle Gemini's field name variations)
+        if (parsed.events) {
+          parsed.events = parsed.events.map((e: any) => ({
+            title: e.title || e.eventTitle || e.activity || "Untitled Event",
+            date_iso: e.date_iso || e.date || e.occurrenceDate || "",
+            start_time: e.start_time || e.startTime || "",
+            end_time: e.end_time || e.endTime || "",
+            location: e.location || e.venue || "TBD",
+            is_accessible: e.is_accessible ?? true,
+            description: e.description || e.notes || "",
+            sourceFile: filename
+          }));
+        }
+
         console.log(`[${correlationId}] [AUDIT] Successfully parsed JSON. Found ${parsed.events?.length || 0} events.`);
         yield { type: "json", content: parsed };
       } catch (e) {

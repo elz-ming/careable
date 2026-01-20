@@ -1,390 +1,270 @@
 'use client'
 
 import * as React from 'react'
-import { Upload, Loader2, Check, AlertCircle, Calendar as CalendarIcon, MapPin, X, FileText, Sparkles } from 'lucide-react'
-import { syncEventsToSupabase } from './_actions'
+import { 
+  Plus, 
+  Calendar as CalendarIcon, 
+  MapPin, 
+  Loader2, 
+  AlertCircle, 
+  Search, 
+  LayoutGrid, 
+  List, 
+  ArrowUpDown,
+  Filter,
+  CheckCircle2,
+  Clock
+} from 'lucide-react'
+import { getEvents } from './_actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
+import { format } from 'date-fns'
 
-interface UploadingFile {
-  id: string;
-  file: File;
-  name: string;
-  status: 'pending' | 'uploading' | 'success' | 'error';
-  previewUrl?: string;
-  error?: string;
-}
-
-export default function StaffEventsPage() {
-  const [uploadingFiles, setUploadingFiles] = React.useState<UploadingFile[]>([])
-  const [isSyncing, setIsSyncing] = React.useState(false)
-  const [editData, setEditData] = React.useState<any[]>([])
+export default function EventsListPage() {
+  const [events, setEvents] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  const [isDragging, setIsDragging] = React.useState(false)
-  const [reasoning, setReasoning] = React.useState<string>("")
-  const [isExtracting, setIsExtracting] = React.useState(false)
+  const [searchQuery, setSearchQuery] = React.useState('')
+  const [viewMode, setViewMode] = React.useState<'cards' | 'table'>('cards')
+  const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc')
+  const [filterAccessible, setFilterAccessible] = React.useState<boolean | 'all'>( 'all')
 
-  const processFiles = async (files: File[]) => {
-    if (files.length === 0) return
+  React.useEffect(() => {
+    fetchEvents()
+  }, [])
 
-    const newFiles = files.map(file => ({
-      id: Math.random().toString(36).substring(7),
-      file,
-      name: file.name,
-      status: 'pending' as const,
-      previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
-    }))
-
-    setUploadingFiles(prev => [...prev, ...newFiles])
-    setIsExtracting(true)
-    setReasoning("")
-
-    // Process each file
-    for (const fileObj of newFiles) {
-      updateFileStatus(fileObj.id, 'uploading')
-
-      const formData = new FormData()
-      formData.append('file', fileObj.file)
-
-      try {
-        const response = await fetch('/staff/api/calendar/extract', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!response.ok) throw new Error(`Server returned ${response.status}`)
-        
-        const reader = response.body?.getReader()
-        if (!reader) throw new Error("Could not initialize stream reader")
-
-        const decoder = new TextDecoder()
-        let buffer = ""
-
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split("\n")
-          buffer = lines.pop() || ""
-
-          for (const line of lines) {
-            if (!line.trim()) continue
-            try {
-              const chunk = JSON.parse(line)
-              if (chunk.type === "text") {
-                setReasoning(prev => prev + chunk.content)
-              } else if (chunk.type === "json") {
-                const data = chunk.content
-                if (data.events) {
-                  updateFileStatus(fileObj.id, 'success')
-                  setEditData(prev => {
-                    const incomingEvents = data.events.map((e: any) => ({
-                      ...e,
-                      sourceFile: fileObj.name
-                    }))
-                    return [...prev, ...incomingEvents].sort((a, b) => (a.date_iso || '').localeCompare(b.date_iso || ''))
-                  })
-                }
-              } else if (chunk.type === "error") {
-                throw new Error(chunk.content)
-              }
-            } catch (e) {
-              console.error("Error parsing stream chunk:", e)
-            }
-          }
-        }
-      } catch (err: any) {
-        updateFileStatus(fileObj.id, 'error', err.message)
-        setError(err.message)
+  const fetchEvents = async () => {
+    try {
+      const result = await getEvents()
+      if (result.success) {
+        setEvents(result.data || [])
+      } else {
+        setError(result.error || 'Failed to fetch events')
       }
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
-    setIsExtracting(false)
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    processFiles(files)
-  }
+  const filteredAndSortedEvents = events
+    .filter(event => {
+      const matchesSearch = 
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesAccessibility = 
+        filterAccessible === 'all' || event.is_accessible === filterAccessible
 
-  const onDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
-
-  const onDragLeave = () => {
-    setIsDragging(false)
-  }
-
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const files = Array.from(e.dataTransfer.files)
-    processFiles(files)
-  }
-
-  const updateFileStatus = (id: string, status: UploadingFile['status'], error?: string) => {
-    setUploadingFiles(prev => prev.map(f => f.id === id ? { ...f, status, error } : f))
-  }
-
-  const handleEdit = (index: number, field: string, value: any) => {
-    const newData = [...editData]
-    newData[index] = { ...newData[index], [field]: value }
-    setEditData(newData)
-  }
-
-  const removeFile = (id: string) => {
-    setUploadingFiles(prev => {
-      const file = prev.find(f => f.id === id)
-      if (file?.previewUrl) URL.revokeObjectURL(file.previewUrl)
-      return prev.filter(f => f.id !== id)
+      return matchesSearch && matchesAccessibility
     })
-  }
-
-  const handleSync = async () => {
-    setIsSyncing(true)
-    setError(null)
-    
-    const result = await syncEventsToSupabase(editData)
-    if (result.success) {
-      alert('Successfully synced events to Supabase!')
-      setEditData([])
-      setUploadingFiles([])
-      setReasoning("")
-    } else {
-      setError(result.error || 'Failed to sync events')
-    }
-    setIsSyncing(false)
-  }
-
-  const clearAll = () => {
-    uploadingFiles.forEach(f => f.previewUrl && URL.revokeObjectURL(f.previewUrl))
-    setUploadingFiles([])
-    setEditData([])
-    setError(null)
-    setReasoning("")
-  }
+    .sort((a, b) => {
+      const dateA = new Date(a.start_time).getTime()
+      const dateB = new Date(b.start_time).getTime()
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
+    })
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-20 p-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-[#2D1E17]">Event Management</h1>
-          <p className="text-[#6B5A4E]">Upload calendar images to automatically extract and sync events.</p>
+          <p className="text-[#6B5A4E]">View and manage all organization events.</p>
         </div>
-        {(editData.length > 0 || uploadingFiles.length > 0) && (
-          <Button variant="ghost" onClick={clearAll} className="text-zinc-400 hover:text-red-500">
-            Clear Everything
+        <Link href="/staff/events/new">
+          <Button className="bg-[#E89D71] hover:bg-[#D88C61] text-white h-11 px-6 rounded-xl font-bold shadow-lg shadow-[#E89D71]/20 transition-all hover:scale-[1.02]">
+            <Plus className="mr-2 h-5 w-5" />
+            Create Event
           </Button>
-        )}
+        </Link>
       </div>
 
-      <div className="space-y-6">
-        {/* Upload & Preview Section */}
-        <div className={cn("grid gap-6", uploadingFiles.length > 0 ? "lg:grid-cols-3" : "grid-cols-1")}>
-          <Card 
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            className={cn(
-              "border-dashed border-2 transition-all duration-200 cursor-pointer relative overflow-hidden group",
-              isDragging ? "border-[#E89D71] bg-[#FEF3EB] scale-[1.01]" : "border-zinc-200 bg-zinc-50/50 hover:bg-zinc-100/50",
-              uploadingFiles.length > 0 ? "h-48" : "py-16"
-            )}
-          >
-            <CardHeader className={cn("text-center", uploadingFiles.length > 0 ? "py-6" : "py-0")}>
-              <div className={cn(
-                "mx-auto rounded-full flex items-center justify-center transition-all duration-200",
-                isDragging ? "bg-[#E89D71] scale-110" : "bg-[#FEF3EB]",
-                uploadingFiles.length > 0 ? "w-12 h-12 mb-3" : "w-16 h-16 mb-4"
-              )}>
-                <Upload className={cn(
-                  "transition-colors duration-200",
-                  isDragging ? "text-white" : "text-[#E89D71]",
-                  uploadingFiles.length > 0 ? "w-6 h-6" : "w-8 h-8"
-                )} />
-              </div>
-              <CardTitle className={cn(
-                "transition-colors duration-200",
-                isDragging ? "text-[#2D1E17]" : "text-xl",
-                uploadingFiles.length > 0 ? "text-base" : "text-2xl"
-              )}>
-                {isDragging ? "Drop here" : (uploadingFiles.length > 0 ? "Add more" : "Upload Calendars")}
-              </CardTitle>
-              {uploadingFiles.length === 0 && !isDragging && (
-                <CardDescription className="max-w-xs mx-auto text-base mt-2">
-                  PNG, JPG, PDF supported
-                </CardDescription>
-              )}
-              <input 
-                type="file" 
-                multiple
-                className="absolute inset-0 opacity-0 cursor-pointer" 
-                onChange={handleFileUpload}
-                accept="image/*,application/pdf"
-              />
-            </CardHeader>
-          </Card>
+      <div className="flex flex-col space-y-4">
+        {/* Toolbar: Search, Filters, Sort, View Toggle */}
+        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+          <div className="relative w-full lg:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <Input 
+              placeholder="Search events..." 
+              className="pl-10 h-11 bg-white rounded-xl border-zinc-100 shadow-sm focus:ring-[#E89D71]"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
-          {/* Preview Grid */}
-          {uploadingFiles.length > 0 && (
-            <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 animate-in fade-in duration-500">
-              {uploadingFiles.map((file) => (
-                <div key={file.id} className="relative group aspect-video rounded-2xl overflow-hidden border border-zinc-200 bg-white shadow-sm">
-                  {file.previewUrl ? (
-                    <img src={file.previewUrl} alt={file.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-zinc-50">
-                      <FileText className="w-8 h-8 text-zinc-300" />
-                      <p className="text-[10px] text-zinc-400 mt-2 truncate w-full text-center">{file.name}</p>
-                    </div>
-                  )}
-                  
-                  {/* Overlay Status */}
-                  <div className={cn(
-                    "absolute inset-0 flex flex-col items-center justify-center transition-opacity bg-black/40 text-white",
-                    file.status === 'uploading' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                  )}>
-                    {file.status === 'uploading' && <Loader2 className="w-6 h-6 animate-spin mb-1" />}
-                    {file.status === 'success' && <div className="bg-green-500 rounded-full p-1 mb-1"><Check className="w-4 h-4" /></div>}
-                    {file.status === 'error' && <div className="bg-red-500 rounded-full p-1 mb-1"><AlertCircle className="w-4 h-4" /></div>}
-                    <p className="text-[10px] font-bold uppercase tracking-wider">
-                      {file.status === 'uploading' ? 'Extracting...' : file.status}
-                    </p>
-                  </div>
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            {/* Sort Order Toggle */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="rounded-xl border-zinc-100 bg-white h-11"
+              onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+            >
+              <ArrowUpDown className="mr-2 h-4 w-4 text-[#E89D71]" />
+              Date {sortOrder === 'asc' ? '(Oldest)' : '(Newest)'}
+            </Button>
 
-                  <button 
-                    onClick={() => removeFile(file.id)}
-                    className="absolute top-1 right-1 p-1 bg-white/80 hover:bg-white rounded-full text-zinc-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
+            {/* Accessibility Filter */}
+            <div className="flex bg-white border border-zinc-100 rounded-xl p-1 h-11">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className={cn("rounded-lg px-3 h-full", filterAccessible === 'all' && "bg-zinc-100 text-[#2D1E17]")}
+                onClick={() => setFilterAccessible('all')}
+              >
+                All
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className={cn("rounded-lg px-3 h-full", filterAccessible === true && "bg-zinc-100 text-[#2D1E17]")}
+                onClick={() => setFilterAccessible(true)}
+              >
+                ♿ Accessible
+              </Button>
             </div>
-          )}
-        </div>
 
-        {/* Reasoning Stream Section */}
-        {(reasoning || isExtracting) && (
-          <Card className="border-[#86B1A4]/30 bg-[#E8F3F0]/20 animate-in fade-in slide-in-from-top-4 duration-700">
-            <CardHeader className="flex flex-row items-center gap-3 py-4">
-              <div className="bg-[#86B1A4] p-2 rounded-lg">
-                <Sparkles className="w-4 h-4 text-white animate-pulse" />
-              </div>
-              <div>
-                <CardTitle className="text-sm font-bold text-[#2D3E3A]">AI Reasoning Process</CardTitle>
-                <CardDescription className="text-xs">Extracting structured data from your calendar...</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-white/50 rounded-xl p-4 border border-[#86B1A4]/10 min-h-[100px] max-h-[300px] overflow-y-auto">
-                <div className="prose prose-sm max-w-none text-[#4A5A56] font-medium leading-relaxed whitespace-pre-wrap">
-                  {reasoning}
-                  {isExtracting && <span className="inline-block w-1.5 h-4 bg-[#86B1A4] animate-pulse ml-1 align-middle" />}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            <div className="h-8 w-px bg-zinc-100 mx-1 hidden sm:block" />
 
-      {/* Extracted Events Table */}
-      {editData.length > 0 && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pt-8 border-t border-zinc-100">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm">
-            <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold text-[#2D1E17]">Extracted Events</h2>
-                <span className="px-3 py-1 bg-[#FEF3EB] text-[#E89D71] rounded-full text-sm font-bold">
-                  {editData.length} Total
-                </span>
-              </div>
-              <p className="text-[#6B5A4E] mt-1">Review and refine the extracted data before syncing to Supabase.</p>
-            </div>
-            <div className="flex gap-3 w-full md:w-auto">
-              <Button className="flex-1 md:flex-none bg-[#E89D71] hover:bg-[#D88C61] text-white h-11 px-8 rounded-xl font-bold shadow-lg shadow-[#E89D71]/20 transition-all hover:scale-[1.02]" onClick={handleSync} disabled={isSyncing}>
-                {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                Confirm & Sync to Supabase
+            {/* View Mode Toggle */}
+            <div className="flex bg-white border border-zinc-100 rounded-xl p-1 h-11">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className={cn("rounded-lg px-3 h-full", viewMode === 'cards' && "bg-zinc-100 text-[#E89D71]")}
+                onClick={() => setViewMode('cards')}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className={cn("rounded-lg px-3 h-full", viewMode === 'table' && "bg-zinc-100 text-[#E89D71]")}
+                onClick={() => setViewMode('table')}
+              >
+                <List className="h-4 w-4" />
               </Button>
             </div>
           </div>
-
-          {error && (
-            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center text-red-600 gap-3">
-              <AlertCircle className="w-5 h-5" />
-              <p className="text-sm font-medium">{error}</p>
-            </div>
-          )}
-
-          <Card className="rounded-3xl overflow-hidden border-zinc-100 shadow-sm">
-            <Table>
-              <TableHeader className="bg-zinc-50/50">
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[30%] font-bold">Event Name</TableHead>
-                  <TableHead className="w-[20%] font-bold">Event Date</TableHead>
-                  <TableHead className="w-[20%] font-bold">Event Time (24h)</TableHead>
-                  <TableHead className="w-[30%] font-bold">Event Venue</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {editData.map((event, index) => (
-                  <TableRow key={index} className="hover:bg-zinc-50/30 transition-colors group">
-                    <TableCell>
-                      <Input 
-                        value={event.title} 
-                        onChange={(e) => handleEdit(index, 'title', e.target.value)}
-                        className="bg-transparent border-transparent hover:border-zinc-200 focus:bg-white focus:border-[#E89D71] transition-all font-medium"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 text-zinc-400 shrink-0" />
-                        <Input 
-                          type="date"
-                          value={event.date_iso} 
-                          onChange={(e) => handleEdit(index, 'date_iso', e.target.value)}
-                          className="bg-transparent border-transparent hover:border-zinc-200 focus:bg-white focus:border-[#E89D71] transition-all"
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Input 
-                          value={event.start_time || ''} 
-                          onChange={(e) => handleEdit(index, 'start_time', e.target.value)}
-                          placeholder="00:00"
-                          className="bg-transparent border-transparent hover:border-zinc-200 focus:bg-white focus:border-[#E89D71] transition-all w-16 px-1 text-center"
-                        />
-                        <span className="text-zinc-300">-</span>
-                        <Input 
-                          value={event.end_time || ''} 
-                          onChange={(e) => handleEdit(index, 'end_time', e.target.value)}
-                          placeholder="00:00"
-                          className="bg-transparent border-transparent hover:border-zinc-200 focus:bg-white focus:border-[#E89D71] transition-all w-16 px-1 text-center"
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
-                        <Input 
-                          value={event.location || ''} 
-                          onChange={(e) => handleEdit(index, 'location', e.target.value)}
-                          className="bg-transparent border-transparent hover:border-zinc-200 focus:bg-white focus:border-[#E89D71] transition-all"
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
         </div>
-      )}
+
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center text-red-600 gap-3">
+            <AlertCircle className="w-5 h-5" />
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        )}
+
+        {/* Content Area */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-zinc-400 gap-2">
+            <Loader2 className="h-10 w-10 animate-spin text-[#E89D71]" />
+            <p className="font-medium">Loading organization events...</p>
+          </div>
+        ) : filteredAndSortedEvents.length > 0 ? (
+          viewMode === 'cards' ? (
+            /* Card View */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
+              {filteredAndSortedEvents.map((event) => (
+                <Card key={event.id} className="group overflow-hidden rounded-3xl border-zinc-100 hover:border-[#E89D71]/30 hover:shadow-xl hover:shadow-[#E89D71]/5 transition-all duration-300 bg-white">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="space-y-1">
+                        <CardTitle className="text-lg font-bold text-[#2D1E17] leading-tight group-hover:text-[#E89D71] transition-colors">
+                          {event.title}
+                        </CardTitle>
+                        <CardDescription className="flex items-center gap-1.5 text-[#6B5A4E]">
+                          <CalendarIcon className="w-3.5 h-3.5" />
+                          {format(new Date(event.start_time), 'EEE, dd MMM yyyy')}
+                        </CardDescription>
+                      </div>
+                      {event.is_accessible && (
+                        <div className="bg-[#E8F3F0] text-[#86B1A4] p-1.5 rounded-lg shrink-0" title="Wheelchair Accessible">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-col gap-2 text-sm text-[#6B5A4E]">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-zinc-400 shrink-0" />
+                        <span>{format(new Date(event.start_time), 'HH:mm')} - {format(new Date(event.end_time), 'HH:mm')}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <MapPin className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
+                        <span className="line-clamp-2">{event.location}</span>
+                      </div>
+                    </div>
+                    {event.description && (
+                      <p className="text-xs text-zinc-400 line-clamp-2 italic border-t border-zinc-50 pt-3">
+                        {event.description}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            /* Table View */
+            <Card className="rounded-3xl overflow-hidden border-zinc-100 shadow-sm animate-in fade-in duration-500 bg-white">
+              <Table>
+                <TableHeader className="bg-zinc-50/50">
+                  <TableRow className="hover:bg-transparent border-none">
+                    <TableHead className="w-[35%] font-bold">Event Name</TableHead>
+                    <TableHead className="w-[20%] font-bold">Date</TableHead>
+                    <TableHead className="w-[15%] font-bold">Time</TableHead>
+                    <TableHead className="w-[30%] font-bold">Venue</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAndSortedEvents.map((event) => (
+                    <TableRow key={event.id} className="hover:bg-zinc-50/30 transition-colors group">
+                      <TableCell className="py-4">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-bold text-[#2D1E17] group-hover:text-[#E89D71] transition-colors">{event.title}</span>
+                          {event.is_accessible && <span className="text-[10px] text-[#86B1A4] font-medium flex items-center gap-1">♿ Accessible</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-[#6B5A4E]">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="w-4 h-4 text-zinc-400" />
+                          {format(new Date(event.start_time), 'dd MMM yyyy')}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-[#6B5A4E]">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-zinc-400" />
+                          {format(new Date(event.start_time), 'HH:mm')}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-[#6B5A4E]">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
+                          <span className="truncate max-w-[200px]">{event.location}</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          )
+        ) : (
+          <div className="h-64 flex flex-col items-center justify-center bg-white rounded-3xl border border-dashed border-zinc-200 text-zinc-400">
+            <div className="bg-zinc-50 p-4 rounded-full mb-4">
+              <Search className="h-8 w-8 text-zinc-300" />
+            </div>
+            <p className="text-lg font-medium">No events found</p>
+            <p className="text-sm">{searchQuery ? "Try adjusting your search or filters." : "Click 'Create Event' to add your first event."}</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

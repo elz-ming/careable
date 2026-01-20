@@ -69,3 +69,22 @@ export async function syncEventsToSupabase(events: any[]) {
   revalidatePath('/staff/events')
   return { success: true }
 }
+
+export async function getEvents() {
+  const { userId } = await auth()
+  if (!userId) throw new Error('Unauthorized')
+
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .order('start_time', { ascending: true })
+
+  if (error) {
+    console.error('[ACTION ERROR] Failed to fetch events:', error.message)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true, data }
+}
