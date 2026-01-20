@@ -49,14 +49,14 @@ export default function EventDetailPage() {
       if (result.success) {
         setEvent(result.data)
         setEditForm({
-          title: result.data.title,
-          description: result.data.description,
-          location: result.data.location,
-          start_time: result.data.start_time.split('.')[0], // Format for datetime-local
-          end_time: result.data.end_time.split('.')[0],
-          capacity: result.data.capacity,
-          is_accessible: result.data.is_accessible,
-          status: result.data.status
+          title: result.data.title || '',
+          description: result.data.description || '',
+          location: result.data.location || '',
+          start_time: result.data.start_time?.split('.')[0] || '', // Format for datetime-local
+          end_time: result.data.end_time?.split('.')[0] || '',
+          capacity: result.data.capacity || 20,
+          is_accessible: result.data.is_accessible ?? true,
+          status: result.data.status || 'active'
         })
       } else {
         setError(result.error || 'Failed to fetch event details')
@@ -235,8 +235,11 @@ export default function EventDetailPage() {
                 {isEditing ? (
                   <Input 
                     type="number"
-                    value={editForm.capacity}
-                    onChange={(e) => setEditForm({ ...editForm, capacity: parseInt(e.target.value) })}
+                    value={editForm.capacity ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditForm({ ...editForm, capacity: val === '' ? '' : parseInt(val) })
+                    }}
                     className="mt-1 h-8 rounded-lg"
                   />
                 ) : (
