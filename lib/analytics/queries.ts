@@ -6,6 +6,7 @@ import type { EventAttendanceSummary, UserEngagementSummary, StaffProductivitySu
 
 /**
  * Check if user is staff or admin
+ * Checks both Clerk session claims AND Supabase database
  */
 async function requireStaffOrAdmin() {
   const { userId, sessionClaims } = await auth();
@@ -14,11 +15,33 @@ async function requireStaffOrAdmin() {
     throw new Error('Unauthorized');
   }
 
-  const role = sessionClaims?.metadata?.role;
+  // First check Clerk session claims
+  let role = sessionClaims?.metadata?.role as string | undefined;
+
+  // If not found in Clerk, check Supabase as fallback
+  if (!role || (role !== 'staff' && role !== 'admin')) {
+    const supabase = await createClient();
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (error || !profile) {
+      console.error('[requireStaffOrAdmin] User not found in database:', error);
+      throw new Error('Forbidden: Staff or Admin access required');
+    }
+
+    role = profile.role;
+  }
+
+  // Final check
   if (role !== 'staff' && role !== 'admin') {
+    console.log('[requireStaffOrAdmin] Access denied. User role:', role);
     throw new Error('Forbidden: Staff or Admin access required');
   }
 
+  console.log('[requireStaffOrAdmin] Access granted. User role:', role);
   return { userId, role };
 }
 
