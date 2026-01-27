@@ -16,11 +16,11 @@ export default async function VolunteerDashboard() {
   const availableEvents = (eventsRes.data || []).slice(0, 3);
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <div className="bg-gradient-to-br from-white to-[#E8F3F0] p-8 rounded-3xl shadow-sm border border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-6">
+    <div className="space-y-8 max-w-5xl mx-auto p-4">
+      <div className="bg-gradient-to-br from-white to-[#E8F3F0] p-6 md:p-8 rounded-3xl shadow-sm border border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="space-y-2 text-center md:text-left">
-          <h2 className="text-3xl font-bold text-[#2D1E17]">Volunteer with Purpose!</h2>
-          <p className="text-[#6B5A4E] text-lg">Your support makes our community stronger every day.</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-[#2D1E17]">Volunteer with Purpose!</h2>
+          <p className="text-[#6B5A4E] text-base md:text-lg">Your support makes our community stronger every day.</p>
         </div>
         <Link href="/volunteer/opportunities">
           <Button className="bg-[#86B1A4] hover:bg-[#759E92] text-white rounded-xl h-12 px-8 font-bold shadow-lg shadow-[#86B1A4]/20 transition-all hover:scale-[1.02]">

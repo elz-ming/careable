@@ -15,11 +15,11 @@ export default async function ParticipantDashboard() {
   const availableEvents = (eventsRes.data || []).slice(0, 3); // Show top 3
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <div className="bg-gradient-to-br from-white to-[#FEF3EB] p-8 rounded-3xl shadow-sm border border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-6">
+    <div className="space-y-8 max-w-5xl mx-auto p-4">
+      <div className="bg-gradient-to-br from-white to-[#FEF3EB] p-6 md:p-8 rounded-3xl shadow-sm border border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="space-y-2 text-center md:text-left">
-          <h2 className="text-3xl font-bold text-[#2D1E17]">Welcome to Careable!</h2>
-          <p className="text-[#6B5A4E] text-lg">Your journey to wellness and community starts here.</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-[#2D1E17]">Welcome to Careable!</h2>
+          <p className="text-[#6B5A4E] text-base md:text-lg">Your journey to wellness and community starts here.</p>
         </div>
         <Link href="/participant/events">
           <Button className="bg-[#E89D71] hover:bg-[#D88C61] text-white rounded-xl h-12 px-8 font-bold shadow-lg shadow-[#E89D71]/20">

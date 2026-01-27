@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import { ArrowLeft, Camera, CheckCircle, XCircle } from 'lucide-react';
 
 interface VerificationResult {
   status: 'ok' | 'error';
@@ -12,8 +14,10 @@ interface VerificationResult {
 }
 
 export default function StaffVerifyPage() {
+  const router = useRouter();
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [isScanning, setIsScanning] = useState(true);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
   useEffect(() => {
@@ -58,73 +62,147 @@ export default function StaffVerifyPage() {
       });
 
       const data = await response.json();
-      setResult(data);
+      
+      if (response.ok && data.status === 'ok') {
+        setResult({
+          status: 'ok',
+          attendeeName: data.attendeeName,
+          role: data.role
+        });
+      } else {
+        setResult({ 
+          status: 'error', 
+          error: data.error || 'Verification failed',
+          reason: data.reason
+        });
+      }
     } catch (err) {
+      console.error('Verification error:', err);
       setResult({ status: 'error', error: 'Failed to communicate with server' });
     }
   }
 
   function onScanFailure(error: any) {
-    // We don't really need to log every failure as it happens constantly when no QR is in view
-    // console.warn(`Code scan error = ${error}`);
+    // Don't log every scan failure
   }
 
   function resetScanner() {
     setResult(null);
     setIsScanning(true);
+    setCameraError(null);
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 space-y-6">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">Attendance Verification</h1>
-        <p className="text-gray-500">Scan attendee QR code to verify participation</p>
+    <div className="min-h-screen bg-[#F5F2F0] pb-6">
+      {/* Header with Back Button */}
+      <div className="bg-white border-b shadow-sm sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => router.back()}
+              className="p-2 rounded-full hover:bg-zinc-100 transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-[#6B5A4E]" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-[#2D1E17]">QR Scanner</h1>
+              <p className="text-sm text-[#6B5A4E]">Scan attendee QR codes</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {isScanning ? (
-        <div className="bg-white p-4 rounded-xl shadow-lg border">
-          <div id="reader" className="overflow-hidden rounded-lg"></div>
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* Instructions Card */}
+        <div className="bg-blue-50 border-2 border-blue-100 rounded-3xl p-5">
+          <div className="flex items-start gap-3">
+            <Camera className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h3 className="font-bold text-blue-900">How to scan:</h3>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Allow camera permission when prompted</li>
+                <li>• Point camera at participant's QR code</li>
+                <li>• Hold steady until scan completes</li>
+                <li>• Make sure QR code is well-lit and in focus</li>
+              </ul>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className={`p-8 rounded-xl shadow-lg border text-center space-y-4 ${
-          result?.status === 'ok' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-        }`}>
-          {result?.status === 'ok' ? (
-            <>
-              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-green-800">Verified!</h2>
-              <div className="space-y-1">
-                <p className="text-lg font-medium text-green-900">{result.attendeeName}</p>
-                <p className="text-sm uppercase tracking-wider text-green-700 opacity-75">{result.role}</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-red-800">Verification Failed</h2>
-              <p className="text-red-700">{result?.error || 'Unknown error occurred'}</p>
-            </>
-          )}
 
-          <button 
-            onClick={resetScanner}
-            className="w-full py-3 px-4 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors mt-4"
-          >
-            Scan Next
-          </button>
+        {isScanning ? (
+          <div className="bg-white rounded-3xl shadow-lg border-2 border-zinc-100 overflow-hidden">
+            <div className="bg-[#F5F2F0] p-4 border-b border-zinc-200">
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-semibold text-[#2D1E17]">Camera Active</span>
+              </div>
+            </div>
+            <div className="p-6">
+              <div id="reader" className="overflow-hidden rounded-2xl"></div>
+            </div>
+            {cameraError && (
+              <div className="p-4 bg-red-50 border-t border-red-100">
+                <p className="text-sm text-red-700 text-center">{cameraError}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className={`rounded-3xl shadow-lg border-2 text-center space-y-6 p-8 ${
+            result?.status === 'ok' 
+              ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-200' 
+              : 'bg-gradient-to-br from-red-50 to-red-100 border-red-200'
+          }`}>
+            {result?.status === 'ok' ? (
+              <>
+                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto text-white shadow-lg">
+                  <CheckCircle className="w-12 h-12" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-bold text-green-800">✓ Verified!</h2>
+                  <div className="bg-white/50 rounded-2xl p-4 space-y-1">
+                    <p className="text-xl font-bold text-green-900">{result.attendeeName}</p>
+                    <p className="text-sm uppercase tracking-wider text-green-700 font-semibold">
+                      {result.role}
+                    </p>
+                  </div>
+                  <p className="text-sm text-green-700">Attendance recorded successfully</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center mx-auto text-white shadow-lg">
+                  <XCircle className="w-12 h-12" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-bold text-red-800">Verification Failed</h2>
+                  <div className="bg-white/50 rounded-2xl p-4">
+                    <p className="text-red-700 font-medium">
+                      {result?.error || 'Unknown error occurred'}
+                    </p>
+                    {result?.reason === 'already_checked_in' && (
+                      <p className="text-sm text-red-600 mt-2">This person has already been checked in.</p>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            <button 
+              onClick={resetScanner}
+              className="w-full py-4 px-6 bg-[#2D1E17] text-white rounded-2xl font-bold hover:bg-[#1a1410] transition-all shadow-lg text-lg"
+            >
+              Scan Next Attendee
+            </button>
+          </div>
+        )}
+
+        {/* Info Footer */}
+        <div className="text-center">
+          <p className="text-xs text-zinc-400">
+            Only authorized staff can perform verification
+          </p>
         </div>
-      )}
-
-      <div className="text-sm text-gray-400 text-center">
-        Only authorized staff can perform verification.
       </div>
     </div>
   );

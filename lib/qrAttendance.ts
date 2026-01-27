@@ -71,11 +71,13 @@ export async function verifyQrToken(
 
   // 1. Basic sanity check
   if (!token || typeof token !== 'string') {
+    console.log('[verifyQrToken] Invalid token format');
     return { status: 'invalid' };
   }
 
   // 2. Hash the incoming token
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  console.log('[verifyQrToken] Looking for hash:', tokenHash.substring(0, 20) + '...');
 
   // 3. Lookup registration by ticket_code (which stores the hash)
   const { data: registration, error } = await supabase
@@ -93,12 +95,19 @@ export async function verifyQrToken(
     .single();
 
   if (error || !registration) {
-    console.log('Verification failed: Token not found or error', error);
+    console.log('[verifyQrToken] Token not found. Error:', error?.message);
     return { status: 'invalid' };
   }
 
+  console.log('[verifyQrToken] Found registration:', {
+    id: registration.id,
+    status: registration.status,
+    check_in_at: registration.check_in_at
+  });
+
   // 4. Check if already checked in
   if (registration.check_in_at) {
+    console.log('[verifyQrToken] Already checked in at:', registration.check_in_at);
     return { status: 'already_checked_in' };
   }
 
@@ -118,19 +127,23 @@ export async function verifyQrToken(
     updateData.attendance_notes = notes;
   }
 
+  console.log('[verifyQrToken] Updating registration with:', updateData);
+
   const { error: updateError } = await supabase
     .from('registrations')
     .update(updateData)
     .eq('id', registration.id);
 
   if (updateError) {
-    console.error('Error marking attendance:', updateError);
+    console.error('[verifyQrToken] Error marking attendance:', updateError);
     throw new Error('Failed to update attendance status');
   }
 
   const profile = Array.isArray(registration.profiles) 
     ? registration.profiles[0] 
     : registration.profiles;
+
+  console.log('[verifyQrToken] Success! Checked in:', profile?.full_name);
 
   return {
     status: 'ok',

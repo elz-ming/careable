@@ -135,11 +135,11 @@ export default function OpportunityDetailPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20 p-4 animate-in fade-in duration-500">
       <div className="flex items-center gap-4">
-        <Link href="/volunteer/opportunities">
+        <button onClick={() => router.back()}>
           <Button variant="ghost" size="icon" className="rounded-full hover:bg-zinc-100">
             <ArrowLeft className="w-5 h-5 text-[#6B5A4E]" />
           </Button>
-        </Link>
+        </button>
         <div>
           <h1 className="text-3xl font-bold text-[#2D1E17] leading-tight">{event.title}</h1>
           <p className="text-[#6B5A4E]">Volunteer Opportunity Details</p>

@@ -16,21 +16,40 @@ export async function POST(req: Request) {
     const { userId, sessionClaims } = await auth();
     const userRole = sessionClaims?.metadata?.role;
 
+    console.log('[QR Verify] Request received:', { userId, userRole });
+
     if (!userId) {
-      return new NextResponse('Unauthorized', { status: 401 });
+      console.log('[QR Verify] Unauthorized: No userId');
+      return NextResponse.json({ 
+        status: 'error',
+        error: 'Unauthorized - Please sign in' 
+      }, { status: 401 });
     }
 
     if (userRole !== 'staff' && userRole !== 'admin') {
-      return new NextResponse('Forbidden: Only staff can verify attendance', { status: 403 });
+      console.log('[QR Verify] Forbidden: User is not staff/admin, role:', userRole);
+      return NextResponse.json({ 
+        status: 'error',
+        error: 'Forbidden: Only staff can verify attendance' 
+      }, { status: 403 });
     }
 
-    const { token, notes } = await req.json();
+    const body = await req.json();
+    const { token, notes } = body;
+    
+    console.log('[QR Verify] Token received:', token?.substring(0, 20) + '...');
+
     if (!token) {
-      return NextResponse.json({ error: 'Token is required' }, { status: 400 });
+      console.log('[QR Verify] Bad request: No token provided');
+      return NextResponse.json({ 
+        status: 'error',
+        error: 'Token is required' 
+      }, { status: 400 });
     }
 
     // Pass staff userId and optional notes to track who performed the check-in
     const result = await verifyQrToken(token, userId, notes);
+    console.log('[QR Verify] Verification result:', result);
 
     if (result.status === 'ok') {
       return NextResponse.json({
@@ -51,15 +70,19 @@ export async function POST(req: Request) {
       }, { status: 409 });
     }
 
+    console.log('[QR Verify] Invalid token');
     return NextResponse.json({
       status: 'error',
       verified: false,
       reason: 'invalid_token',
-      error: 'Invalid QR code.'
+      error: 'Invalid or expired QR code. Please generate a new one.'
     }, { status: 401 });
 
   } catch (error: any) {
-    console.error('QR Verify Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('[QR Verify] Error:', error);
+    return NextResponse.json({ 
+      status: 'error',
+      error: 'Internal Server Error: ' + error.message 
+    }, { status: 500 });
   }
 }

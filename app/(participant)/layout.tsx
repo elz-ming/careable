@@ -37,7 +37,7 @@ export default function ParticipantLayout({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full">
+      <main className="flex-1 w-full px-4 md:px-6">
         {children}
       </main>
 
