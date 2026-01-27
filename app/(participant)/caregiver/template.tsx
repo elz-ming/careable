@@ -1,16 +1,15 @@
-import * as React from "react";
+import * as React from 'react';
 import { getUserPreferences } from '@/app/actions/preferences';
-import { PreferencesProvider } from '@/components/PreferencesProvider';
-import type { UserPreferences } from '@/components/PreferencesProvider';
-import ParticipantClientLayout from './ParticipantClientLayout';
+import { PreferencesProvider, type UserPreferences } from '@/components/PreferencesProvider';
 
-export default async function ParticipantLayout({
-  children,
+export default async function CaregiverTemplate({
+  children
 }: {
   children: React.ReactNode;
 }) {
   // Fetch user preferences server-side
   const result = await getUserPreferences();
+  
   const initialPreferences: UserPreferences = result.success && result.data
     ? result.data
     : {
@@ -21,9 +20,7 @@ export default async function ParticipantLayout({
 
   return (
     <PreferencesProvider initialPreferences={initialPreferences}>
-      <ParticipantClientLayout>
-        {children}
-      </ParticipantClientLayout>
+      {children}
     </PreferencesProvider>
   );
 }

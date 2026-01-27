@@ -9,6 +9,8 @@ export type RegistrationStatus = 'registered' | 'attended' | 'cancelled';
 export type EventStatus = 'active' | 'cancelled' | 'completed';
 export type Relationship = 'parent' | 'guardian' | 'sibling' | 'relative' | 'other';
 export type LanguagePreference = 'en' | 'zh' | 'ms';
+export type FontSize = 'small' | 'medium' | 'large';
+export type Theme = 'light' | 'dark';
 export type RegistrationSource = 'self' | 'caregiver' | 'staff';
 export type TargetAudience = 'participants' | 'volunteers' | 'both';
 
@@ -22,6 +24,8 @@ export interface Profile {
   is_first_time: boolean; // Added in migration 06
   participant_full_name: string | null; // Added in migration 08
   language_preference: LanguagePreference; // Added in migration 08
+  font_size: FontSize; // Added in migration 09
+  theme: Theme; // Added in migration 09
   special_needs: string | null; // Added in migration 08
   emergency_contact: string | null; // Added in migration 08
   created_at: string;
