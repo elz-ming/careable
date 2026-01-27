@@ -122,3 +122,36 @@ export async function checkRegistration(eventId: string) {
 
   return { success: true, isRegistered: true }
 }
+
+export async function getUserRegistrations() {
+  const { userId } = await auth()
+  if (!userId) return { success: false, error: 'Unauthorized', data: [] }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('registrations')
+    .select(`
+      id,
+      status,
+      check_in_at,
+      events (
+        id,
+        title,
+        description,
+        location,
+        start_time,
+        end_time,
+        capacity,
+        is_accessible
+      )
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching registrations:', error)
+    return { success: false, error: error.message, data: [] }
+  }
+
+  return { success: true, data: data || [] }
+}

@@ -23,7 +23,7 @@ export default function StaffVerifyPage() {
         { 
           fps: 10, 
           qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0
+          aspectRatio: 1.0,
         },
         /* verbose= */ false
       );

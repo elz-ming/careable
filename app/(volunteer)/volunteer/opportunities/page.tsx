@@ -9,13 +9,15 @@ import {
   Search, 
   ChevronRight,
   Loader2,
-  Accessibility
+  Accessibility,
+  Users,
+  Heart,
+  TrendingUp,
+  Sparkles
 } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { format } from 'date-fns'
+import { format, isToday, isTomorrow, isThisWeek } from 'date-fns'
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
 
 export default function OpportunitiesPage() {
   const [events, setEvents] = React.useState<any[]>([])
@@ -44,79 +46,159 @@ export default function OpportunitiesPage() {
     event.location.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  const getEventBadge = (startTime: string) => {
+    const date = new Date(startTime)
+    if (isToday(date)) return { text: 'Today', color: 'bg-red-100 text-red-700' }
+    if (isTomorrow(date)) return { text: 'Tomorrow', color: 'bg-blue-100 text-blue-700' }
+    if (isThisWeek(date)) return { text: 'This Week', color: 'bg-green-100 text-green-700' }
+    return null
+  }
+
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-[#E89D71]" />
-        <p className="text-zinc-500 font-medium">Loading opportunities...</p>
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 px-4">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#86B1A4] to-[#6FA08F] animate-pulse"></div>
+          <Loader2 className="absolute inset-0 m-auto h-8 w-8 animate-spin text-white" />
+        </div>
+        <p className="text-[#6B5A4E] font-medium text-center">Finding volunteer opportunities...</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-20 p-4">
-      <div>
-        <h1 className="text-3xl font-bold text-[#2D1E17]">Volunteer Opportunities</h1>
-        <p className="text-[#6B5A4E]">Help out at our upcoming events and make a difference.</p>
-      </div>
-
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-        <Input 
-          placeholder="Search opportunities..." 
-          className="pl-10 h-11 bg-white rounded-xl border-zinc-100 shadow-sm focus:ring-[#E89D71]"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-
-      {filteredEvents.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
-          {filteredEvents.map((event) => (
-            <Link key={event.id} href={`/volunteer/opportunities/${event.id}`}>
-              <Card className="group h-full overflow-hidden rounded-3xl border-zinc-100 hover:border-[#E89D71]/30 hover:shadow-xl hover:shadow-[#E89D71]/5 transition-all duration-300 bg-white cursor-pointer flex flex-col">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="space-y-1">
-                      <CardTitle className="text-lg font-bold text-[#2D1E17] leading-tight group-hover:text-[#E89D71] transition-colors">
-                        {event.title}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-1.5 text-[#6B5A4E]">
-                        <CalendarIcon className="w-3.5 h-3.5" />
-                        {format(new Date(event.start_time), 'EEE, dd MMM yyyy')}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4 flex-1 flex flex-col justify-between">
-                  <div className="space-y-2 text-sm text-[#6B5A4E]">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-zinc-400 shrink-0" />
-                      <span>{format(new Date(event.start_time), 'HH:mm')}</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <MapPin className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                      <span className="line-clamp-2">{event.location}</span>
-                    </div>
-                  </div>
-                  <div className="pt-4 flex items-center justify-between text-[#E89D71] font-bold text-sm">
-                    <span>View Details</span>
-                    <ChevronRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="h-64 flex flex-col items-center justify-center bg-white rounded-3xl border border-dashed border-zinc-200 text-zinc-400">
-          <div className="bg-zinc-50 p-4 rounded-full mb-4">
-            <Search className="h-8 w-8 text-zinc-300" />
+    <div className="min-h-screen bg-[#F3F8F6]">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-white via-[#E8F3F0] to-[#E8F3F0] px-4 pt-6 pb-8 border-b border-[#86B1A4]/10">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="flex items-center gap-2 text-[#86B1A4]">
+            <Heart className="w-5 h-5" />
+            <span className="text-sm font-bold uppercase tracking-wider">Make a Difference</span>
           </div>
-          <p className="text-lg font-medium">No opportunities found</p>
-          <p className="text-sm">Check back soon for more events!</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-[#2D1E17] leading-tight">
+            Volunteer<br/>Opportunities
+          </h1>
+          <p className="text-[#6B5A4E] text-sm md:text-base max-w-xl">
+            Join our events, support our community, and create meaningful impact
+          </p>
+
+          {/* Search Bar */}
+          <div className="relative max-w-xl pt-2">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#6B5A4E]/50" />
+            <Input 
+              placeholder="Search opportunities or locations..." 
+              className="pl-12 h-14 bg-white rounded-2xl border-2 border-zinc-100 shadow-sm focus:border-[#86B1A4] focus:ring-[#86B1A4] text-base"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {/* Stats */}
+          <div className="flex items-center gap-6 pt-2 text-sm">
+            <div className="flex items-center gap-2 text-[#6B5A4E]">
+              <CalendarIcon className="w-4 h-4" />
+              <span className="font-semibold">{events.length} Opportunities</span>
+            </div>
+            <div className="flex items-center gap-2 text-[#86B1A4]">
+              <TrendingUp className="w-4 h-4" />
+              <span className="font-semibold">Active</span>
+            </div>
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* Events Grid */}
+      <div className="max-w-7xl mx-auto px-4 py-6 pb-24">
+        {filteredEvents.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 animate-in fade-in duration-500">
+            {filteredEvents.map((event) => {
+              const badge = getEventBadge(event.start_time)
+              
+              return (
+                <Link key={event.id} href={`/volunteer/opportunities/${event.id}`}>
+                  <div className="group h-full bg-white rounded-3xl border-2 border-zinc-100 hover:border-[#86B1A4] hover:shadow-2xl hover:shadow-[#86B1A4]/10 transition-all duration-300 overflow-hidden cursor-pointer flex flex-col">
+                    {/* Card Header with Badge */}
+                    <div className="p-5 pb-4 space-y-3">
+                      {badge && (
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${badge.color}`}>
+                          {badge.text}
+                        </span>
+                      )}
+                      <h3 className="text-lg font-bold text-[#2D1E17] leading-tight group-hover:text-[#86B1A4] transition-colors line-clamp-2 min-h-[3.5rem]">
+                        {event.title}
+                      </h3>
+                    </div>
+
+                    {/* Card Body */}
+                    <div className="px-5 pb-5 space-y-3 flex-1 flex flex-col">
+                      {/* Date & Time */}
+                      <div className="space-y-2 text-sm text-[#6B5A4E]">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="w-4 h-4 text-[#86B1A4] shrink-0" />
+                          <span className="font-medium">{format(new Date(event.start_time), 'EEE, dd MMM yyyy')}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-[#86B1A4] shrink-0" />
+                          <span>{format(new Date(event.start_time), 'HH:mm')} - {format(new Date(event.end_time), 'HH:mm')}</span>
+                        </div>
+                      </div>
+
+                      {/* Location */}
+                      <div className="flex items-start gap-2 text-sm text-[#6B5A4E]">
+                        <MapPin className="w-4 h-4 text-[#86B1A4] shrink-0 mt-0.5" />
+                        <span className="line-clamp-2 leading-relaxed">{event.location}</span>
+                      </div>
+
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {event.capacity && (
+                          <div className="flex items-center gap-1 px-2 py-1 bg-zinc-100 rounded-lg text-xs text-[#6B5A4E]">
+                            <Users className="w-3 h-3" />
+                            <span>{event.capacity} needed</span>
+                          </div>
+                        )}
+                        {event.is_accessible && (
+                          <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded-lg text-xs text-green-700">
+                            <Accessibility className="w-3 h-3" />
+                            <span>Accessible</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* CTA */}
+                      <div className="pt-4 mt-auto border-t border-zinc-100 flex items-center justify-between text-[#86B1A4] font-bold text-sm">
+                        <span>View Details</span>
+                        <ChevronRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        ) : (
+          /* Empty State */
+          <div className="min-h-[50vh] flex flex-col items-center justify-center text-center px-4">
+            <div className="bg-gradient-to-br from-[#E8F3F0] to-[#E8F3F0]/50 p-8 rounded-full mb-6">
+              <Search className="h-12 w-12 text-[#86B1A4]/40" />
+            </div>
+            <h3 className="text-xl font-bold text-[#2D1E17] mb-2">No opportunities found</h3>
+            <p className="text-[#6B5A4E] max-w-sm">
+              {searchQuery 
+                ? "Try adjusting your search terms or browse all available opportunities." 
+                : "Check back soon for new ways to help!"}
+            </p>
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="mt-6 px-6 py-3 bg-[#86B1A4] text-white rounded-xl font-semibold hover:bg-[#6FA08F] transition-colors shadow-lg shadow-[#86B1A4]/20"
+              >
+                Clear Search
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

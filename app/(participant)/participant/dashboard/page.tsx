@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { getUserRegistrations } from '@/lib/supabase/db';
+import { getUserRegistrations } from '@/app/actions/participant';
 import AttendanceQR from '@/src/components/AttendanceQR';
 import { getParticipantEvents } from '@/app/actions/participant';
 import { Calendar as CalendarIcon, MapPin, ChevronRight, Sparkles } from 'lucide-react';
@@ -9,7 +9,8 @@ import { format } from 'date-fns';
 
 export default async function ParticipantDashboard() {
   const { userId } = await auth();
-  const registrations = await getUserRegistrations(userId!);
+  const registrationsRes = await getUserRegistrations();
+  const registrations = registrationsRes.data || [];
   const eventsRes = await getParticipantEvents();
   const availableEvents = (eventsRes.data || []).slice(0, 3); // Show top 3
 
