@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { QrCode, X, Download, Loader2 } from 'lucide-react';
 
 interface AttendanceQRProps {
   registrationId: string;
@@ -45,48 +46,79 @@ export default function AttendanceQR({ registrationId, eventTitle }: AttendanceQ
       <button 
         onClick={generateQR}
         disabled={loading}
-        className="text-sm font-medium text-blue-600 hover:text-blue-500 disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#E89D71] text-white rounded-xl font-bold hover:bg-[#D88C61] disabled:opacity-50 transition-all shadow-lg shadow-[#E89D71]/20 active:scale-95"
       >
-        {loading ? 'Generating...' : 'View Entry QR'}
+        {loading ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Generating QR Code...
+          </>
+        ) : (
+          <>
+            <QrCode className="w-5 h-5" />
+            Show Entry QR Code
+          </>
+        )}
       </button>
 
       {isOpen && qrCode && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+          onClick={() => setIsOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-6 shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
             <div className="flex justify-between items-center">
-              <h3 className="font-bold text-lg">Entry Ticket</h3>
+              <div>
+                <h3 className="font-bold text-xl text-[#2D1E17]">Entry Ticket</h3>
+                <p className="text-xs text-[#6B5A4E] mt-0.5">Show this to staff</p>
+              </div>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="p-1 rounded-full hover:bg-gray-100"
+                className="p-2 rounded-full hover:bg-zinc-100 transition-colors"
+                aria-label="Close"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="h-5 w-5 text-[#6B5A4E]" />
               </button>
             </div>
             
-            <div className="bg-gray-50 rounded-xl p-4 flex flex-col items-center space-y-4 border border-gray-100">
+            {/* QR Code Display */}
+            <div className="bg-gradient-to-br from-zinc-50 to-white rounded-2xl p-6 flex flex-col items-center space-y-4 border-2 border-zinc-100 shadow-inner">
               <img 
                 src={qrCode} 
                 alt="Attendance QR Code" 
-                className="w-full aspect-square rounded-lg shadow-sm"
+                className="w-full aspect-square rounded-xl shadow-md"
               />
-              <div className="text-center">
-                <p className="font-bold text-gray-900">{eventTitle}</p>
-                <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">Single Use Only</p>
+              <div className="text-center space-y-1">
+                <p className="font-bold text-[#2D1E17] text-lg line-clamp-2">{eventTitle}</p>
+                <div className="inline-block px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold uppercase tracking-wider">
+                  Single Use Only
+                </div>
               </div>
             </div>
 
-            <p className="text-xs text-gray-400 text-center">
-              Show this QR code to the staff at the entrance to check in.
-            </p>
+            {/* Instructions */}
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700 leading-relaxed">
+              <p className="font-semibold mb-1">📱 How to use:</p>
+              <ol className="list-decimal list-inside space-y-1 text-xs">
+                <li>Show this QR code to staff at the entrance</li>
+                <li>They will scan it to mark your attendance</li>
+                <li>Keep your brightness high for best results</li>
+              </ol>
+            </div>
 
-            <button 
-              onClick={() => setIsOpen(false)}
-              className="w-full py-2 bg-gray-900 text-white rounded-xl font-medium"
-            >
-              Done
-            </button>
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setIsOpen(false)}
+                className="flex-1 py-3 bg-zinc-100 text-[#2D1E17] rounded-xl font-bold hover:bg-zinc-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

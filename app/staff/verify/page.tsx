@@ -24,10 +24,6 @@ export default function StaffVerifyPage() {
           fps: 10, 
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0,
-          // Force rear camera on mobile devices
-          facingMode: "environment",
-          // Remember last used camera for better UX
-          rememberLastUsedCamera: true,
         },
         /* verbose= */ false
       );
