@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { ArrowLeft, Camera, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, RefreshCw, Loader2 } from 'lucide-react';
 
 interface VerificationResult {
   status: 'ok' | 'error';
@@ -17,7 +17,9 @@ export default function StaffVerifyPage() {
   const router = useRouter();
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [isScanning, setIsScanning] = useState(true);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
   useEffect(() => {
@@ -28,6 +30,7 @@ export default function StaffVerifyPage() {
           fps: 10, 
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0,
+          facingMode: facingMode,
         },
         /* verbose= */ false
       );
@@ -42,7 +45,7 @@ export default function StaffVerifyPage() {
         scannerRef.current = null;
       }
     };
-  }, [isScanning]);
+  }, [isScanning, facingMode]);
 
   async function onScanSuccess(decodedText: string) {
     console.log(`Code matched = ${decodedText}`);
@@ -53,6 +56,7 @@ export default function StaffVerifyPage() {
     }
     
     setIsScanning(false);
+    setIsVerifying(true);
     
     try {
       const response = await fetch('/api/qr/verify', {
@@ -62,6 +66,8 @@ export default function StaffVerifyPage() {
       });
 
       const data = await response.json();
+      
+      setIsVerifying(false);
       
       if (response.ok && data.status === 'ok') {
         setResult({
@@ -78,6 +84,7 @@ export default function StaffVerifyPage() {
       }
     } catch (err) {
       console.error('Verification error:', err);
+      setIsVerifying(false);
       setResult({ status: 'error', error: 'Failed to communicate with server' });
     }
   }
@@ -89,7 +96,21 @@ export default function StaffVerifyPage() {
   function resetScanner() {
     setResult(null);
     setIsScanning(true);
+    setIsVerifying(false);
     setCameraError(null);
+  }
+
+  async function switchCamera() {
+    // Clear current scanner
+    if (scannerRef.current) {
+      await scannerRef.current.clear();
+      scannerRef.current = null;
+    }
+    
+    // Toggle facing mode
+    setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
+    
+    // Scanner will restart due to useEffect dependency
   }
 
   return (
@@ -114,28 +135,31 @@ export default function StaffVerifyPage() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Instructions Card */}
-        <div className="bg-blue-50 border-2 border-blue-100 rounded-3xl p-5">
-          <div className="flex items-start gap-3">
-            <Camera className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h3 className="font-bold text-blue-900">How to scan:</h3>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Allow camera permission when prompted</li>
-                <li>• Point camera at participant's QR code</li>
-                <li>• Hold steady until scan completes</li>
-                <li>• Make sure QR code is well-lit and in focus</li>
-              </ul>
+        {isVerifying ? (
+          <div className="rounded-3xl shadow-lg border-2 bg-gradient-to-br from-zinc-50 to-zinc-100 border-zinc-200 text-center space-y-6 p-8">
+            <div className="w-20 h-20 bg-zinc-400 rounded-full flex items-center justify-center mx-auto text-white shadow-lg">
+              <Loader2 className="w-12 h-12 animate-spin" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold text-zinc-800">Verifying...</h2>
+              <p className="text-zinc-600">Checking attendance record</p>
             </div>
           </div>
-        </div>
-
-        {isScanning ? (
+        ) : isScanning ? (
           <div className="bg-white rounded-3xl shadow-lg border-2 border-zinc-100 overflow-hidden">
             <div className="bg-[#F5F2F0] p-4 border-b border-zinc-200">
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-semibold text-[#2D1E17]">Camera Active</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-semibold text-[#2D1E17]">Camera Active</span>
+                </div>
+                <button
+                  onClick={switchCamera}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-zinc-200 hover:bg-zinc-50 transition-colors text-sm font-medium text-[#2D1E17]"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Switch Camera
+                </button>
               </div>
             </div>
             <div className="p-6">
