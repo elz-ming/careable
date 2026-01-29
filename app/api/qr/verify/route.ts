@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { verifyQrToken } from '@/lib/qrAttendance';
 import { NextResponse } from 'next/server';
 
@@ -14,7 +14,18 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const { userId, sessionClaims } = await auth();
-    const userRole = sessionClaims?.metadata?.role;
+    
+    // Get role with fallback logic (same as middleware)
+    let userRole = (sessionClaims?.metadata as any)?.role || (sessionClaims as any)?.app_role;
+
+    // FALLBACK: If role is missing from token, fetch directly from Clerk
+    if (userId && !userRole) {
+      console.log('[QR Verify] Role missing from session, fetching from Clerk');
+      const client = await clerkClient();
+      const user = await client.users.getUser(userId);
+      userRole = user.publicMetadata.role as string;
+      console.log('[QR Verify] Fresh role fetch:', userRole);
+    }
 
     console.log('[QR Verify] Request received:', { userId, userRole });
 

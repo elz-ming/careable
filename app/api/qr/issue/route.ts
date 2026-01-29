@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { issueQrForRegistration } from '@/lib/qrAttendance';
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
@@ -32,7 +32,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
     }
 
-    const userRole = sessionClaims?.metadata?.role;
+    // Get role with fallback logic (same as middleware)
+    let userRole = (sessionClaims?.metadata as any)?.role || (sessionClaims as any)?.app_role;
+    
+    // FALLBACK: If role is missing from token, fetch directly from Clerk
+    if (!userRole) {
+      const client = await clerkClient();
+      const user = await client.users.getUser(userId);
+      userRole = user.publicMetadata.role as string;
+    }
+    
     const isStaffOrAdmin = userRole === 'staff' || userRole === 'admin';
 
     // In clerk, userId is a string. In our profiles table, it's stored as UUID (casted Clerk ID).
