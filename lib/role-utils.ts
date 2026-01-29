@@ -101,17 +101,17 @@ export async function isCaregiver(): Promise<boolean> {
  */
 export function getRoleNavItems(role: 'volunteer' | 'caregiver' | 'participant', t: any) {
   const baseItems = [
-    { href: '/portal/dashboard', icon: 'Home', label: t.common.home },
-    { href: '/portal/events', icon: 'Calendar', label: t.common.discover },
-    { href: '/portal/registrations', icon: 'Ticket', label: t.common.myEvents },
-    { href: '/portal/profile', icon: 'User', label: t.common.profile },
+    { href: '/dashboard', icon: 'Home', label: t.common.home },
+    { href: '/events', icon: 'Calendar', label: t.common.discover },
+    { href: '/registrations', icon: 'Ticket', label: t.common.myEvents },
+    { href: '/profile', icon: 'User', label: t.common.profile },
   ];
   
   // Add caregiver-specific nav item
   if (role === 'caregiver') {
     return [
       ...baseItems.slice(0, 3),
-      { href: '/portal/participants', icon: 'Users', label: t.common.participants || 'Participants' },
+      { href: '/participants', icon: 'Users', label: t.common.participants || 'Participants' },
       ...baseItems.slice(3)
     ];
   }

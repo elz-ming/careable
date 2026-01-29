@@ -139,7 +139,7 @@ export default function EventDetailPage() {
           <h2 className="text-xl font-bold text-red-900">Oops! Something went wrong</h2>
           <p className="text-red-700">{error || "We couldn't find the event you're looking for."}</p>
           <Button 
-            onClick={() => router.push('/portal/events')}
+            onClick={() => router.push('/events')}
             variant="outline" 
             className="rounded-xl border-red-200 text-red-700 hover:bg-red-100"
           >

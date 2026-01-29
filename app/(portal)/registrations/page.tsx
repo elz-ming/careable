@@ -264,7 +264,7 @@ export default function RegistrationsPage() {
               {filter === 'all' && "Start your wellness journey by discovering and joining events that interest you."}
             </p>
             <a 
-              href="/portal/events"
+              href="/events"
               className="inline-flex items-center gap-2 px-8 py-4 text-white rounded-xl font-bold transition-colors shadow-lg"
               style={{
                 backgroundColor: theme.primary,

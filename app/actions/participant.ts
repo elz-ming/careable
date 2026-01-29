@@ -79,9 +79,9 @@ export async function registerForEvent(eventId: string, fullName?: string) {
     return { success: false, error: regError.message }
   }
 
-  revalidatePath('/participant/dashboard')
-  revalidatePath('/volunteer/dashboard')
-  revalidatePath(`/participant/events/${eventId}`)
+  revalidatePath('/dashboard')
+  revalidatePath('/events')
+  revalidatePath(`/events/${eventId}`)
   
   return { success: true }
 }

@@ -26,17 +26,17 @@ export default function PortalClientLayout({
   // Define navigation items based on role
   const navItems = React.useMemo(() => {
     const baseItems = [
-      { href: '/portal/dashboard', icon: Home, label: t.common.home },
-      { href: '/portal/events', icon: Calendar, label: t.common.discover },
-      { href: '/portal/registrations', icon: Ticket, label: t.common.myEvents },
-      { href: '/portal/profile', icon: User, label: t.common.profile },
+      { href: '/dashboard', icon: Home, label: t.common.home },
+      { href: '/events', icon: Calendar, label: t.common.discover },
+      { href: '/registrations', icon: Ticket, label: t.common.myEvents },
+      { href: '/profile', icon: User, label: t.common.profile },
     ];
 
     // Add participants management for caregivers
     if (isCaregiver) {
       return [
         ...baseItems.slice(0, 3),
-        { href: '/portal/participants', icon: Users, label: 'Participants' },
+        { href: '/participants', icon: Users, label: 'Participants' },
         ...baseItems.slice(3)
       ];
     }
@@ -85,7 +85,7 @@ export default function PortalClientLayout({
       {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-zinc-200 flex items-center justify-around py-2 px-2 md:hidden z-10 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] transition-colors duration-300">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/portal/dashboard' && pathname.startsWith(item.href));
+          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           const Icon = item.icon;
           
           return (

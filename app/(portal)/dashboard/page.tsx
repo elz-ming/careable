@@ -59,7 +59,7 @@ export default async function DashboardPage() {
             {labels.welcomeSubtitle}
           </p>
         </div>
-        <Link href="/portal/events">
+        <Link href="/events">
           <Button 
             className="text-white rounded-xl h-12 px-8 font-bold shadow-lg transition-all hover:scale-[1.02]"
             style={{
@@ -122,7 +122,7 @@ export default async function DashboardPage() {
               <p className="text-zinc-400">
                 {role === 'volunteer' ? 'Ready to help out?' : "You haven't joined any events yet."}
               </p>
-              <Link href="/portal/events">
+              <Link href="/events">
                 <Button 
                   variant="link" 
                   className="font-bold mt-2"
@@ -142,24 +142,18 @@ export default async function DashboardPage() {
               <Sparkles className="w-5 h-5" style={{ color: themeColors.iconColor }} />
               {labels.suggestedTitle}
             </h3>
-            <Link href="/portal/events" className="text-xs font-bold hover:underline" style={{ color: themeColors.primary }}>
+            <Link href="/events" className="text-xs font-bold hover:underline" style={{ color: themeColors.primary }}>
               View All
             </Link>
           </div>
           <div className="grid gap-4">
             {availableEvents.length > 0 ? (
               availableEvents.map((event: any) => (
-                <Link key={event.id} href={`/portal/events/${event.id}`}>
+                <Link key={event.id} href={`/events/${event.id}`}>
                   <div 
-                    className="bg-white p-5 rounded-2xl border border-zinc-100 flex justify-between items-center shadow-sm hover:shadow-md transition-all group"
+                    className="bg-white p-5 rounded-2xl border border-zinc-100 flex justify-between items-center shadow-sm hover:shadow-md hover:border-opacity-20 transition-all group"
                     style={{
                       borderColor: 'rgb(244 244 245)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = `${themeColors.primary}33`;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'rgb(244 244 245)';
                     }}
                   >
                     <div className="space-y-1">

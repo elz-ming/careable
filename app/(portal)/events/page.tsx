@@ -196,7 +196,7 @@ export default function EventsPage() {
               const badge = getEventBadge(event.start_time);
               
               return (
-                <Link key={event.id} href={`/portal/events/${event.id}`}>
+                <Link key={event.id} href={`/events/${event.id}`}>
                   <div 
                     className="group h-full bg-white backdrop-blur-sm rounded-3xl border-2 hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col"
                     style={{

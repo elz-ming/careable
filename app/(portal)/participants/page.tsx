@@ -9,7 +9,7 @@ export default async function ParticipantsPage() {
   // Guard: Only caregivers can access this page
   const role = await getCurrentUserRole();
   if (role !== 'caregiver') {
-    redirect('/portal/dashboard');
+    redirect('/dashboard');
   }
 
   const result = await getManagedParticipants();
@@ -24,7 +24,7 @@ export default async function ParticipantsPage() {
           <p className="text-[#6B5A4E] mt-1">Children and individuals you care for</p>
         </div>
         <Link 
-          href="/portal/participants/add"
+          href="/participants/add"
           className="flex items-center gap-2 px-4 py-2 bg-[#EC4899] text-white rounded-xl font-semibold hover:bg-[#DB2777] transition-colors shadow-sm"
         >
           <UserPlus className="w-5 h-5" />
@@ -43,7 +43,7 @@ export default async function ParticipantsPage() {
             Add a participant to register them for events and manage their activity schedule
           </p>
           <Link 
-            href="/portal/participants/add"
+            href="/participants/add"
             className="inline-block px-6 py-3 bg-[#EC4899] text-white rounded-xl font-semibold hover:bg-[#DB2777] transition-colors shadow-sm"
           >
             Add Your First Participant
@@ -99,14 +99,14 @@ export default async function ParticipantsPage() {
                   {/* Actions */}
                   <div className="flex flex-col gap-2 w-full sm:w-auto">
                     <Link 
-                      href={`/portal/participants/${link.participant_id}/events`}
+                      href={`/participants/${link.participant_id}/events`}
                       className="flex items-center justify-center gap-2 px-4 py-2 bg-[#EC4899] text-white rounded-lg font-medium hover:bg-[#DB2777] transition-colors text-sm"
                     >
                       <Calendar className="w-4 h-4" />
                       View Events
                     </Link>
                     <Link 
-                      href={`/portal/participants/${link.participant_id}/edit`}
+                      href={`/participants/${link.participant_id}/edit`}
                       className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-zinc-200 text-[#6B5A4E] rounded-lg font-medium hover:bg-zinc-50 transition-colors text-sm"
                     >
                       Edit Details

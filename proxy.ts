@@ -38,7 +38,11 @@ export default clerkMiddleware(async (auth, req) => {
 
     // B. Redirect to appropriate dashboard based on role
     if (role) {
-      const dashboardPath = `/${role}/dashboard`;
+      // Portal roles (volunteer, caregiver, participant) use unified routes WITHOUT /portal/ prefix
+      const portalRoles = ['volunteer', 'caregiver', 'participant'];
+      const dashboardPath = portalRoles.includes(role) 
+        ? '/dashboard' 
+        : `/${role}/dashboard`;
       
       // Redirect from landing, auth, or onboarding pages to the correct dashboard
       const shouldRedirectToDashboard = 
@@ -51,11 +55,25 @@ export default clerkMiddleware(async (auth, req) => {
       }
 
       // C. Cross-role protection: Ensure user only accesses their own route group
-      const roles = ['admin', 'staff', 'volunteer', 'caregiver', 'participant'];
+      const roles = ['admin', 'staff'];
       const currentPathRole = roles.find(r => req.nextUrl.pathname.startsWith(`/${r}`));
       
+      // Redirect if trying to access wrong admin/staff dashboard
       if (currentPathRole && currentPathRole !== role) {
         return NextResponse.redirect(new URL(dashboardPath, req.url));
+      }
+      
+      // Redirect portal roles trying to access old route structure
+      if (portalRoles.includes(role)) {
+        const oldPortalPaths = ['/volunteer/', '/participant/', '/caregiver/', '/portal/'];
+        const isOldPortalPath = oldPortalPaths.some(path => req.nextUrl.pathname.startsWith(path));
+        
+        if (isOldPortalPath) {
+          // Map old paths to new unified routes (without /portal/ prefix)
+          const newPath = req.nextUrl.pathname
+            .replace(/^\/(volunteer|participant|caregiver|portal)\//, '/');
+          return NextResponse.redirect(new URL(newPath, req.url));
+        }
       }
     }
   }
