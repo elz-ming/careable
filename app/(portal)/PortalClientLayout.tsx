@@ -81,7 +81,7 @@ export default function PortalClientLayout({
 
       {/* Mobile Bottom Navigation */}
       <nav 
-        className="fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t flex items-center justify-around py-2 px-2 md:hidden z-10 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] transition-all duration-300"
+        className="fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t flex items-center justify-around py-2 px-1 md:hidden z-10 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] transition-all duration-300"
         style={{
           backgroundColor: `${theme.primary}15`,
           borderColor: theme.secondary
@@ -90,12 +90,15 @@ export default function PortalClientLayout({
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           const Icon = item.icon;
+          const hasExtraItem = navItems.length > 4; // Caregiver has 5 items
           
           return (
             <Link 
               key={item.href}
               href={item.href} 
-              className={`flex flex-col items-center space-y-1 px-4 py-2 rounded-xl transition-all ${
+              className={`flex flex-col items-center gap-0.5 rounded-xl transition-all ${
+                hasExtraItem ? 'px-2 py-1.5' : 'px-3 py-2'
+              } ${
                 isActive 
                   ? '' 
                   : 'hover:bg-white/50'
@@ -108,11 +111,11 @@ export default function PortalClientLayout({
               }}
             >
               <Icon 
-                className="w-5 h-5" 
+                className={hasExtraItem ? "w-4 h-4" : "w-5 h-5"} 
                 style={isActive ? { color: theme.dark } : { color: theme.primary }}
               />
               <span 
-                className="text-[10px] font-bold"
+                className={`font-bold ${hasExtraItem ? 'text-[9px]' : 'text-[10px]'}`}
                 style={isActive ? { color: theme.dark } : { color: theme.primary }}
               >
                 {item.label}

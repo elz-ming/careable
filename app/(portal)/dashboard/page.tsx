@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { getUserRegistrations, getParticipantEvents } from '@/app/actions/participant';
 import AttendanceQR from '@/src/components/AttendanceQR';
-import { Calendar as CalendarIcon, MapPin, ChevronRight, Sparkles, Heart } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronRight, Sparkles, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -22,7 +22,16 @@ export default async function DashboardPage() {
   
   // Fetch data
   const registrationsRes = await getUserRegistrations();
-  const registrations = registrationsRes.data || [];
+  const allRegistrations = registrationsRes.data || [];
+  
+  // Sort: registered first, then attended, take top 3
+  const sortedRegistrations = [...allRegistrations].sort((a, b) => {
+    if (a.status === 'registered' && b.status !== 'registered') return -1;
+    if (a.status !== 'registered' && b.status === 'registered') return 1;
+    return 0;
+  });
+  const registrations = sortedRegistrations.slice(0, 3);
+  
   const eventsRes = await getParticipantEvents();
   const availableEvents = (eventsRes.data || []).slice(0, 3);
 
@@ -30,38 +39,44 @@ export default async function DashboardPage() {
   const themeColors = {
     volunteer: {
       primary: '#86B1A4',
-      gradient: 'from-white to-[#E8F3F0]',
+      secondary: '#D4E8E3',
+      gradient: 'from-[#E8F3F0] to-white',
+      bgColor: '#E8F3F0',
       iconColor: '#86B1A4'
     },
     caregiver: {
       primary: '#EC4899',
-      gradient: 'from-white to-[#FCE7F3]',
+      secondary: '#FCE7F3',
+      gradient: 'from-[#FCE7F3] to-white',
+      bgColor: '#FCE7F3',
       iconColor: '#EC4899'
     },
     participant: {
       primary: '#E89D71',
-      gradient: 'from-white to-[#FEF3EB]',
+      secondary: '#FEF3EB',
+      gradient: 'from-[#FEF3EB] to-white',
+      bgColor: '#FEF3EB',
       iconColor: '#E89D71'
     }
   }[role];
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto p-4">
-      {/* Welcome Banner */}
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Welcome Header - Integrated into background */}
       <div 
-        className={`bg-gradient-to-br ${themeColors.gradient} p-6 md:p-8 rounded-3xl shadow-sm border border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-6`}
+        className={`bg-gradient-to-br ${themeColors.gradient} px-4 py-6 -mx-4 -mt-4 flex flex-col md:flex-row justify-between items-center gap-4`}
       >
-        <div className="space-y-2 text-center md:text-left">
-          <h2 className="text-2xl md:text-3xl font-bold text-[#2D1E17]">
+        <div className="space-y-1 text-center md:text-left">
+          <h2 className="text-xl md:text-2xl font-bold text-[#2D1E17]">
             {labels.welcomeTitle}
           </h2>
-          <p className="text-[#6B5A4E] text-base md:text-lg">
+          <p className="text-[#6B5A4E] text-sm md:text-base">
             {labels.welcomeSubtitle}
           </p>
         </div>
         <Link href="/events">
           <Button 
-            className="text-white rounded-xl h-12 px-8 font-bold shadow-lg transition-all hover:scale-[1.02]"
+            className="text-white rounded-xl h-10 px-6 font-bold shadow-lg transition-all hover:scale-[1.02]"
             style={{
               backgroundColor: themeColors.primary,
               boxShadow: `0 10px 25px -5px ${themeColors.primary}40`
@@ -72,45 +87,61 @@ export default async function DashboardPage() {
         </Link>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-4">
         {/* Left Column: Registered Events */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold text-[#2D1E17] flex items-center gap-2">
+            <h3 className="text-lg font-bold text-[#2D1E17] flex items-center gap-2">
               <CalendarIcon className="w-5 h-5" style={{ color: themeColors.iconColor }} />
-              {labels.myEventsTitle}
+              Registered Events
             </h3>
+            {allRegistrations.length > 3 && (
+              <Link 
+                href="/registrations" 
+                className="text-xs font-bold hover:underline"
+                style={{ color: themeColors.primary }}
+              >
+                View More
+              </Link>
+            )}
           </div>
           {registrations.length > 0 ? (
-            <div className="grid gap-4">
+            <div className="grid gap-3">
               {registrations.map((reg: any) => (
                 <div 
                   key={reg.id} 
-                  className="bg-white p-5 rounded-2xl border border-zinc-100 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow"
+                  className="bg-white p-4 rounded-xl border border-zinc-100 flex justify-between items-center gap-3 shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <div className="space-y-1">
-                    <h4 className="font-bold text-[#2D1E17]">{reg.events.title}</h4>
-                    <p className="text-sm text-zinc-500 flex items-center gap-1.5">
-                      <CalendarIcon className="w-3.5 h-3.5" />
-                      {format(new Date(reg.events.start_time), 'EEE, dd MMM')}
-                    </p>
-                    <p className="text-sm text-zinc-500 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5" />
-                      {reg.events.location}
-                    </p>
-                    {role === 'volunteer' && (
-                      <p className="text-[10px] mt-1 text-zinc-600">
-                        Status: <span className={cn("font-bold uppercase tracking-wider", 
-                          reg.status === 'attended' ? 'text-green-600' : 'text-blue-600')}>
-                          {reg.status}
-                        </span>
-                      </p>
-                    )}
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <h4 className="font-bold text-[#2D1E17] text-sm leading-tight truncate">{reg.events.title}</h4>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div 
+                        className="px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap"
+                        style={{
+                          backgroundColor: themeColors.secondary,
+                          color: themeColors.primary
+                        }}
+                      >
+                        {format(new Date(reg.events.start_time), 'EEE, dd MMM')}
+                      </div>
+                      <div 
+                        className={cn(
+                          "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap",
+                          reg.status === 'attended' 
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-blue-100 text-blue-700'
+                        )}
+                      >
+                        {reg.status}
+                      </div>
+                    </div>
                   </div>
                   {reg.status !== 'attended' && (
                     <AttendanceQR 
                       registrationId={reg.id} 
-                      eventTitle={reg.events.title} 
+                      eventTitle={reg.events.title}
+                      compact={true}
+                      themeColor={themeColors.primary}
                     />
                   )}
                 </div>
@@ -119,13 +150,13 @@ export default async function DashboardPage() {
           ) : (
             <div className="bg-white p-10 rounded-2xl border border-dashed border-zinc-200 text-center">
               <Heart className="w-10 h-10 text-zinc-100 mx-auto mb-3" />
-              <p className="text-zinc-400">
+              <p className="text-zinc-400 text-sm">
                 {role === 'volunteer' ? 'Ready to help out?' : "You haven't joined any events yet."}
               </p>
               <Link href="/events">
                 <Button 
                   variant="link" 
-                  className="font-bold mt-2"
+                  className="font-bold mt-2 text-sm"
                   style={{ color: themeColors.primary }}
                 >
                   {role === 'volunteer' ? 'Find an opportunity' : 'Find your first event'}
@@ -138,7 +169,7 @@ export default async function DashboardPage() {
         {/* Right Column: Suggested Events */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold text-[#2D1E17] flex items-center gap-2">
+            <h3 className="text-lg font-bold text-[#2D1E17] flex items-center gap-2">
               <Sparkles className="w-5 h-5" style={{ color: themeColors.iconColor }} />
               {labels.suggestedTitle}
             </h3>
@@ -146,33 +177,32 @@ export default async function DashboardPage() {
               View All
             </Link>
           </div>
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {availableEvents.length > 0 ? (
               availableEvents.map((event: any) => (
                 <Link key={event.id} href={`/events/${event.id}`}>
                   <div 
-                    className="bg-white p-5 rounded-2xl border border-zinc-100 flex justify-between items-center shadow-sm hover:shadow-md hover:border-opacity-20 transition-all group"
-                    style={{
-                      borderColor: 'rgb(244 244 245)'
-                    }}
+                    className="bg-white p-4 rounded-xl border border-zinc-100 flex justify-between items-center shadow-sm hover:shadow-md hover:border-opacity-20 transition-all group"
                   >
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-[#2D1E17] transition-colors">{event.title}</h4>
-                      <p className="text-xs text-zinc-500 line-clamp-1">{event.location}</p>
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <h4 className="font-bold text-[#2D1E17] text-sm leading-tight truncate">{event.title}</h4>
+                      <p className="text-xs text-zinc-500 truncate">{event.location}</p>
                     </div>
                     <ChevronRight 
-                      className="w-5 h-5 text-zinc-300 transform group-hover:translate-x-1 transition-all" 
+                      className="w-5 h-5 transform group-hover:translate-x-1 transition-all shrink-0" 
                       style={{
-                        color: '#d4d4d8'
+                        color: themeColors.primary
                       }}
                     />
                   </div>
                 </Link>
               ))
             ) : (
-              <p className="text-zinc-400 text-center py-10 bg-zinc-50 rounded-2xl">
-                No new {role === 'volunteer' ? 'opportunities' : 'events'} at the moment.
-              </p>
+              <div className="bg-white p-10 rounded-2xl border border-dashed border-zinc-200 text-center">
+                <p className="text-zinc-400 text-sm">
+                  No new {role === 'volunteer' ? 'opportunities' : 'events'} at the moment.
+                </p>
+              </div>
             )}
           </div>
         </div>

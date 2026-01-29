@@ -75,7 +75,20 @@ export default function OnboardingPage() {
         return
       }
 
-      // Caregiver flow: Create participant profile and link
+      // Caregiver flow: Set role FIRST, then create participant profile
+      // Complete onboarding for caregiver (sets the role)
+      const result = await completeOnboarding({
+        role: finalRole,
+        membershipType: undefined,
+      })
+
+      if (!result.success) {
+        alert(result.error || 'Failed to complete onboarding')
+        setLoading(false)
+        return
+      }
+
+      // Now that user has caregiver role, create participant profile
       if (finalRole === 'caregiver' && participantName.trim()) {
         const participantResult = await createAndLinkParticipant({
           participantFullName: participantName,
@@ -87,27 +100,17 @@ export default function OnboardingPage() {
         })
 
         if (!participantResult.success) {
-          alert(participantResult.error || 'Failed to create participant profile')
-          setLoading(false)
-          return
+          console.error('Failed to create participant:', participantResult.error)
+          // Don't block - the caregiver account is already created
+          // They can add participants later
         }
       }
 
-      // Complete onboarding for caregiver
-      const result = await completeOnboarding({
-        role: finalRole,
-        membershipType: undefined,
-      })
-
-      if (result.success) {
-        console.log('Onboarding success, reloading session...')
-        await session?.reload()
-        console.log('Performing hard redirect...')
-        window.location.href = `/dashboard`
-      } else {
-        alert(result.error || 'Something went wrong')
-        setLoading(false)
-      }
+      // Reload session and redirect
+      console.log('Onboarding success, reloading session...')
+      await session?.reload()
+      console.log('Performing hard redirect...')
+      window.location.href = `/dashboard`
     } catch (err: any) {
       alert(err.message || 'Something went wrong')
       setLoading(false)
@@ -187,41 +190,41 @@ export default function OnboardingPage() {
     const themeHover = isParticipantFlow ? '#D88C61' : '#DB2777'
     
     return (
-      <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center p-6 font-sans text-[#4A3728]">
-        <div className="max-w-2xl w-full space-y-6">
+      <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center p-4 sm:p-6 font-sans text-[#4A3728]">
+        <div className="max-w-2xl w-full space-y-4 sm:space-y-6">
           <button 
             onClick={handleBackFromCaregiverForm}
-            className="flex items-center gap-2 text-[#6B5A4E] transition-colors mb-4"
+            className="flex items-center gap-2 text-[#6B5A4E] transition-colors mb-2 sm:mb-4"
             style={{ color: '#6B5A4E' }}
             onMouseEnter={(e) => e.currentTarget.style.color = themeColor}
             onMouseLeave={(e) => e.currentTarget.style.color = '#6B5A4E'}
           >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-semibold">Back to role selection</span>
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="font-semibold text-sm sm:text-base">Back to role selection</span>
           </button>
 
-          <div className="text-center space-y-2 mb-8">
+          <div className="text-center space-y-2 mb-6 sm:mb-8">
             <div 
-              className="inline-block px-4 py-2 rounded-full text-sm font-bold mb-2"
+              className="inline-block px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-bold mb-2"
               style={{ backgroundColor: themeBg, color: themeColor }}
             >
               {isParticipantFlow ? 'Participant' : 'Caregiver'} Setup
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-[#2D1E17]">
-              {isParticipantFlow ? 'Tell Us About Your Caregiver' : 'Tell Us About Your Participant'}
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#2D1E17] px-4">
+              {isParticipantFlow ? 'Tell Us About Your Caregiver' : 'Tell Us About Your Care Receiver'}
             </h1>
-            <p className="text-[#6B5A4E] max-w-md mx-auto">
+            <p className="text-sm sm:text-base text-[#6B5A4E] max-w-md mx-auto px-4">
               {isParticipantFlow 
                 ? "We'll try to match you with your caregiver's account, or keep this as emergency contact info."
                 : "We'll try to match you with your participant's account, or keep this as emergency contact info."}
             </p>
           </div>
 
-          <div className="bg-white rounded-3xl border-2 border-zinc-100 p-8 space-y-6 shadow-lg">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border-2 border-zinc-100 p-5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 shadow-lg">
             {isParticipantFlow ? (
               <>
                 {/* Checkbox: I do not have a caregiver */}
-                <label className="flex items-start space-x-3 cursor-pointer p-4 rounded-xl border-2 transition-all"
+                <label className="flex items-start space-x-2 sm:space-x-3 cursor-pointer p-3 sm:p-4 rounded-xl border-2 transition-all"
                   style={{ 
                     backgroundColor: noCaregiver ? '#FEF3EB' : 'transparent',
                     borderColor: noCaregiver ? themeColor : '#E5E7EB'
@@ -237,14 +240,14 @@ export default function OnboardingPage() {
                         setCaregiverEmail('')
                       }
                     }}
-                    className="w-5 h-5 rounded border-2 mt-0.5"
+                    className="w-4 h-4 sm:w-5 sm:h-5 rounded border-2 mt-0.5 shrink-0"
                     style={{ 
                       borderColor: themeColor,
                       accentColor: themeColor
                     }}
                   />
                   <div>
-                    <span className="text-sm font-bold text-[#2D1E17] block">I do not have a caregiver</span>
+                    <span className="text-xs sm:text-sm font-bold text-[#2D1E17] block">I do not have a caregiver</span>
                     <span className="text-xs text-[#6B5A4E]">Skip linking with a caregiver account</span>
                   </div>
                 </label>
@@ -253,7 +256,7 @@ export default function OnboardingPage() {
                   <>
                     {/* Caregiver's Name */}
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#2D1E17] flex items-center gap-1">
+                      <label className="text-xs sm:text-sm font-bold text-[#2D1E17] flex items-center gap-1">
                         Caregiver's Full Name <span className="text-red-500">*</span>
                       </label>
                       <Input 
@@ -261,7 +264,7 @@ export default function OnboardingPage() {
                         placeholder="e.g., Mary Tan"
                         value={caregiverName}
                         onChange={(e) => setCaregiverName(e.target.value)}
-                        className="h-12 rounded-xl border-2"
+                        className="h-11 sm:h-12 rounded-xl border-2 text-sm sm:text-base"
                         style={{ borderColor: '#E5E7EB', focusBorderColor: themeColor }}
                         required
                       />
@@ -270,7 +273,7 @@ export default function OnboardingPage() {
 
                     {/* Caregiver's Email */}
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#2D1E17] flex items-center gap-1">
+                      <label className="text-xs sm:text-sm font-bold text-[#2D1E17] flex items-center gap-1">
                         Caregiver's Email Address <span className="text-red-500">*</span>
                       </label>
                       <Input 
@@ -278,7 +281,7 @@ export default function OnboardingPage() {
                         placeholder="e.g., mary.tan@email.com"
                         value={caregiverEmail}
                         onChange={(e) => setCaregiverEmail(e.target.value)}
-                        className="h-12 rounded-xl border-2"
+                        className="h-11 sm:h-12 rounded-xl border-2 text-sm sm:text-base"
                         style={{ borderColor: '#E5E7EB' }}
                         required
                       />
@@ -290,7 +293,7 @@ export default function OnboardingPage() {
             ) : (
               <>
                 {/* Checkbox: My care receiver does not have an account */}
-                <label className="flex items-start space-x-3 cursor-pointer p-4 rounded-xl border-2 transition-all"
+                <label className="flex items-start space-x-2 sm:space-x-3 cursor-pointer p-3 sm:p-4 rounded-xl border-2 transition-all"
                   style={{ 
                     backgroundColor: noParticipantAccount ? '#FCE7F3' : 'transparent',
                     borderColor: noParticipantAccount ? themeColor : '#E5E7EB'
@@ -302,64 +305,61 @@ export default function OnboardingPage() {
                     onChange={(e) => {
                       setNoParticipantAccount(e.target.checked)
                       if (e.target.checked) {
-                        setParticipantName('')
                         setParticipantEmail('')
                       }
                     }}
-                    className="w-5 h-5 rounded border-2 mt-0.5"
+                    className="w-4 h-4 sm:w-5 sm:h-5 rounded border-2 mt-0.5 shrink-0"
                     style={{ 
                       borderColor: themeColor,
                       accentColor: themeColor
                     }}
                   />
                   <div>
-                    <span className="text-sm font-bold text-[#2D1E17] block">My care receiver does not have an account</span>
-                    <span className="text-xs text-[#6B5A4E]">Skip linking with a participant account</span>
+                    <span className="text-xs sm:text-sm font-bold text-[#2D1E17] block leading-tight">My care receiver does not have an account</span>
+                    <span className="text-xs text-[#6B5A4E]">They don't have an existing account to link</span>
                   </div>
                 </label>
 
-                {!noParticipantAccount && (
-                  <>
-                    {/* Participant Name */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#2D1E17] flex items-center gap-1">
-                        Participant's Full Name <span className="text-red-500">*</span>
-                      </label>
-                      <Input 
-                        type="text"
-                        placeholder="e.g., John Tan Wei Ming"
-                        value={participantName}
-                        onChange={(e) => setParticipantName(e.target.value)}
-                        className="h-12 rounded-xl border-2 focus:border-[#EC4899] focus:ring-[#EC4899]"
-                        required
-                      />
-                      <p className="text-xs text-[#6B5A4E]">The full name of the participant</p>
-                    </div>
+                {/* Participant Name - Always shown */}
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-bold text-[#2D1E17] flex items-center gap-1">
+                    Care Receiver's Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input 
+                    type="text"
+                    placeholder="e.g., John Tan Wei Ming"
+                    value={participantName}
+                    onChange={(e) => setParticipantName(e.target.value)}
+                    className="h-11 sm:h-12 rounded-xl border-2 text-sm sm:text-base focus:border-[#EC4899] focus:ring-[#EC4899]"
+                    required
+                  />
+                  <p className="text-xs text-[#6B5A4E]">The full name of your care receiver</p>
+                </div>
 
-                    {/* Participant Email */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#2D1E17]">
-                        Participant's Email Address (if available)
-                      </label>
-                      <Input 
-                        type="email"
-                        placeholder="e.g., john.tan@email.com"
-                        value={participantEmail}
-                        onChange={(e) => setParticipantEmail(e.target.value)}
-                        className="h-12 rounded-xl border-2 focus:border-[#EC4899] focus:ring-[#EC4899]"
-                      />
-                      <p className="text-xs text-[#6B5A4E]">We'll try to link your accounts if they have an existing account</p>
-                    </div>
-                  </>
+                {/* Participant Email - Only shown if they have an account */}
+                {!noParticipantAccount && (
+                  <div className="space-y-2">
+                    <label className="text-xs sm:text-sm font-bold text-[#2D1E17]">
+                      Care Receiver's Email Address (if available)
+                    </label>
+                    <Input 
+                      type="email"
+                      placeholder="e.g., john.tan@email.com"
+                      value={participantEmail}
+                      onChange={(e) => setParticipantEmail(e.target.value)}
+                      className="h-11 sm:h-12 rounded-xl border-2 text-sm sm:text-base focus:border-[#EC4899] focus:ring-[#EC4899]"
+                    />
+                    <p className="text-xs text-[#6B5A4E]">We'll try to link your accounts if they have an existing account</p>
+                  </div>
                 )}
               </>
             )}
 
             {/* Important Notice */}
             {((isParticipantFlow && !noCaregiver) || (!isParticipantFlow && !noParticipantAccount)) && (
-              <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 flex gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-700 leading-relaxed">
+              <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-3 sm:p-4 flex gap-2 sm:gap-3">
+                <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 shrink-0 mt-0.5" />
+                <div className="text-xs sm:text-sm text-blue-700 leading-relaxed">
                   <p className="font-semibold mb-1">Account Linking</p>
                   <p>
                     {isParticipantFlow 
@@ -378,7 +378,7 @@ export default function OnboardingPage() {
                   : (!noParticipantAccount && !participantName.trim())
               )}
               onClick={handleComplete}
-              className="w-full py-4 text-white rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg mt-8"
+              className="w-full py-3 sm:py-4 text-white rounded-xl font-bold text-base sm:text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg mt-6 sm:mt-8"
               style={{ 
                 backgroundColor: themeColor,
                 boxShadow: `0 10px 40px -10px ${themeColor}30`
@@ -396,20 +396,20 @@ export default function OnboardingPage() {
 
   // Original Role Selection View
   return (
-    <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center p-6 font-sans text-[#4A3728]">
-      <div className="max-w-5xl w-full space-y-8">
+    <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center p-4 sm:p-6 font-sans text-[#4A3728]">
+      <div className="max-w-5xl w-full space-y-6 sm:space-y-8">
         <div className="text-center space-y-2">
-          <div className="inline-block px-4 py-2 bg-[#FEF3EB] rounded-full text-sm font-bold text-[#E89D71] mb-2">
+          <div className="inline-block px-3 py-1.5 sm:px-4 sm:py-2 bg-[#FEF3EB] rounded-full text-xs sm:text-sm font-bold text-[#E89D71] mb-2">
             Welcome to Careable
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-[#2D1E17]">Choose Your Role</h1>
-          <p className="text-lg text-[#6B5A4E]">Select how you'd like to participate in our community</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#2D1E17] px-4">Choose Your Role</h1>
+          <p className="text-sm sm:text-base lg:text-lg text-[#6B5A4E] px-4">Select how you'd like to participate in our community</p>
         </div>
 
         {/* Role Grid: Split column + 3 full columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 mt-8 sm:mt-12">
           {/* First Column: Split Participant/Caregiver */}
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4 lg:gap-6">
             {splitColumnCards.map((item) => (
               <div 
                 key={item.id}
@@ -423,19 +423,19 @@ export default function OnboardingPage() {
                     setShowCaregiverForm(true) // Show form for participant too
                   }
                 }}
-                className={`cursor-pointer p-6 rounded-3xl border-2 transition-all duration-300 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md ${
+                className={`cursor-pointer p-4 sm:p-5 lg:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all duration-300 flex flex-col justify-between space-y-3 sm:space-y-4 shadow-sm hover:shadow-md ${
                   item.cardBg
                 } ${
                   role === item.id ? `${item.color} ring-2 ${item.ring}` : 'border-zinc-100'
                 }`}
               >
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   <div>
-                    <h2 className={`text-lg lg:text-xl font-bold ${item.textColor}`}>{item.title}</h2>
-                    <div className="text-sm text-[#6B5A4E] leading-relaxed">
+                    <h2 className={`text-base sm:text-lg lg:text-xl font-bold ${item.textColor} leading-tight`}>{item.title}</h2>
+                    <div className="text-xs sm:text-sm text-[#6B5A4E] leading-relaxed mt-1">
                       {item.id === 'caregiver' ? (
                         <>
-                          <p>{expandedCard === item.id ? item.desc : (item as any).shortDesc}</p>
+                          <p className="break-words">{expandedCard === item.id ? item.desc : (item as any).shortDesc}</p>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
@@ -448,14 +448,14 @@ export default function OnboardingPage() {
                           </button>
                         </>
                       ) : (
-                        <p>{item.desc}</p>
+                        <p className="break-words">{item.desc}</p>
                       )}
                     </div>
                   </div>
                 </div>
 
                 {role === item.id && (
-                  <div className="pt-4 border-t border-white/50 space-y-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="pt-3 sm:pt-4 border-t border-white/50 space-y-3 sm:space-y-4 animate-in fade-in slide-in-from-top-2">
                     {item.id === 'participant' && (
                       <div className="space-y-2">
                         <label className="text-xs font-semibold text-[#6B5A4E] uppercase tracking-wide">
@@ -464,7 +464,7 @@ export default function OnboardingPage() {
                         <select 
                           value={membershipType}
                           onChange={(e) => setMembershipType(e.target.value)}
-                          className="w-full h-11 px-3 rounded-xl border-2 border-zinc-200 bg-white text-sm focus:outline-none focus:border-[#E89D71] font-medium"
+                          className="w-full h-10 sm:h-11 px-3 rounded-xl border-2 border-zinc-200 bg-white text-xs sm:text-sm focus:outline-none focus:border-[#E89D71] font-medium"
                         >
                           <option>Ad hoc</option>
                           <option>Once a week</option>
@@ -479,7 +479,7 @@ export default function OnboardingPage() {
                         e.stopPropagation()
                         setShowCaregiverForm(true)
                       }}
-                      className={`w-full py-3 px-4 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50 shadow-lg ${item.buttonBg} ${item.shadowColor}`}
+                      className={`w-full py-2.5 sm:py-3 px-3 sm:px-4 text-white rounded-xl font-bold text-xs sm:text-sm transition-all disabled:opacity-50 shadow-lg ${item.buttonBg} ${item.shadowColor}`}
                     >
                       {loading ? 'Setting up...' : 'Continue Setup →'}
                     </button>
@@ -497,25 +497,25 @@ export default function OnboardingPage() {
                 setRole(item.id)
                 setIsCaregiver(false)
               }}
-              className={`cursor-pointer p-6 rounded-3xl border-2 transition-all duration-300 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md ${
+              className={`cursor-pointer p-4 sm:p-5 lg:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all duration-300 flex flex-col justify-between space-y-3 sm:space-y-4 shadow-sm hover:shadow-md ${
                 item.cardBg
               } ${
                 role === item.id ? `${item.color} ring-2 ${item.ring}` : 'border-zinc-100'
               }`}
             >
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <div>
-                  <h2 className={`text-lg lg:text-xl font-bold ${item.textColor}`}>{item.title}</h2>
-                  <p className="text-sm text-[#6B5A4E] leading-relaxed">{item.desc}</p>
+                  <h2 className={`text-base sm:text-lg lg:text-xl font-bold ${item.textColor} leading-tight`}>{item.title}</h2>
+                  <p className="text-xs sm:text-sm text-[#6B5A4E] leading-relaxed mt-1 break-words">{item.desc}</p>
                 </div>
               </div>
 
               {role === item.id && (
-                <div className="pt-4 border-t border-white/50 space-y-4 animate-in fade-in slide-in-from-top-2">
+                <div className="pt-3 sm:pt-4 border-t border-white/50 space-y-3 sm:space-y-4 animate-in fade-in slide-in-from-top-2">
                   <button 
                     disabled={loading}
                     onClick={handleComplete}
-                    className={`w-full py-3 px-4 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50 shadow-lg ${item.buttonBg} ${item.shadowColor}`}
+                    className={`w-full py-2.5 sm:py-3 px-3 sm:px-4 text-white rounded-xl font-bold text-xs sm:text-sm transition-all disabled:opacity-50 shadow-lg ${item.buttonBg} ${item.shadowColor}`}
                   >
                     {loading ? 'Setting up...' : `Start as ${item.title}`}
                   </button>
@@ -525,7 +525,7 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        <p className="text-center text-xs text-zinc-400 pt-8">
+        <p className="text-center text-xs text-zinc-400 pt-6 sm:pt-8 px-4">
           Demo Mode: Selection will automatically update your Clerk metadata and Supabase profile.
         </p>
       </div>

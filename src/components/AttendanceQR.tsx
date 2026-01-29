@@ -6,9 +6,11 @@ import { QrCode, X, Download, Loader2 } from 'lucide-react';
 interface AttendanceQRProps {
   registrationId: string;
   eventTitle: string;
+  compact?: boolean; // New prop for icon-only display
+  themeColor?: string; // Theme color for styling
 }
 
-export default function AttendanceQR({ registrationId, eventTitle }: AttendanceQRProps) {
+export default function AttendanceQR({ registrationId, eventTitle, compact = false, themeColor = '#E89D71' }: AttendanceQRProps) {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -43,23 +45,46 @@ export default function AttendanceQR({ registrationId, eventTitle }: AttendanceQ
 
   return (
     <>
-      <button 
-        onClick={generateQR}
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#E89D71] text-white rounded-xl font-bold hover:bg-[#D88C61] disabled:opacity-50 transition-all shadow-lg shadow-[#E89D71]/20 active:scale-95"
-      >
-        {loading ? (
-          <>
+      {compact ? (
+        <button 
+          onClick={generateQR}
+          disabled={loading}
+          className="p-2.5 rounded-lg hover:bg-opacity-10 disabled:opacity-50 transition-all active:scale-95 shrink-0"
+          style={{
+            backgroundColor: `${themeColor}15`,
+            color: themeColor
+          }}
+          aria-label="Show Entry QR Code"
+        >
+          {loading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
-            Generating QR Code...
-          </>
-        ) : (
-          <>
+          ) : (
             <QrCode className="w-5 h-5" />
-            Show Entry QR Code
-          </>
-        )}
-      </button>
+          )}
+        </button>
+      ) : (
+        <button 
+          onClick={generateQR}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 px-6 py-3 text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg active:scale-95"
+          style={{
+            backgroundColor: themeColor,
+            boxShadow: `0 10px 25px -5px ${themeColor}40`
+          }}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Generating QR Code...
+            </>
+          ) : (
+            <>
+              <QrCode className="w-5 h-5" />
+              Show Entry QR Code
+            </>
+          )}
+        </button>
+      )}
 
       {isOpen && qrCode && (
         <div 
