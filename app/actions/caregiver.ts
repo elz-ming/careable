@@ -41,9 +41,11 @@ export async function linkParticipant(data: {
 
 /**
  * Create a new participant profile and link to caregiver
+ * If participantEmail is provided, tries to link with existing account
  */
 export async function createAndLinkParticipant(data: {
   participantFullName: string;
+  participantEmail?: string;
   relationship: Relationship;
   specialNeeds?: string;
   emergencyContact?: string;
@@ -57,15 +59,76 @@ export async function createAndLinkParticipant(data: {
 
   const supabase = await createClient();
 
+  // If email provided, try to find existing participant
+  if (data.participantEmail) {
+    console.log('Attempting to link with existing participant:', data.participantEmail)
+    
+    const { data: existingParticipant } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('email', data.participantEmail)
+      .eq('role', 'participant')
+      .single()
+
+    if (existingParticipant) {
+      console.log('Found existing participant, creating link:', existingParticipant.id)
+      
+      // Check if link already exists
+      const { data: existingLink } = await supabase
+        .from('caregiver_participants')
+        .select('id')
+        .eq('caregiver_id', userId)
+        .eq('participant_id', existingParticipant.id)
+        .single()
+
+      if (existingLink) {
+        console.log('Link already exists')
+        return { success: true, data: { linked: true } }
+      }
+
+      // Create new link
+      const { data: link, error: linkError } = await supabase
+        .from('caregiver_participants')
+        .insert({
+          caregiver_id: userId,
+          participant_id: existingParticipant.id,
+          relationship: data.relationship
+        })
+        .select()
+        .single()
+
+      if (linkError) {
+        console.error('Error linking to existing participant:', linkError)
+        return { error: 'Failed to link with existing participant' }
+      }
+
+      // Update participant info
+      await supabase
+        .from('profiles')
+        .update({
+          participant_full_name: data.participantFullName,
+          special_needs: data.specialNeeds || null,
+          emergency_contact: data.emergencyContact || null,
+          membership_type: data.membershipType || null,
+        })
+        .eq('id', existingParticipant.id)
+
+      console.log('Successfully linked with existing participant!')
+      return { success: true, data: { linked: true, link } }
+    }
+    
+    console.log('Participant not found, creating managed profile')
+  }
+
   // Generate a unique ID for the participant
   const participantId = `participant_${crypto.randomBytes(16).toString('hex')}`;
 
-  // Create participant profile
+  // Create participant profile (managed by caregiver)
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .insert({
       id: participantId,
-      email: `${participantId}@careable.placeholder`, // Placeholder email
+      email: data.participantEmail || `${participantId}@careable.placeholder`, // Use provided email or placeholder
       participant_full_name: data.participantFullName,
       role: 'participant',
       special_needs: data.specialNeeds || null,
@@ -99,7 +162,7 @@ export async function createAndLinkParticipant(data: {
     return { error: 'Failed to link participant' };
   }
 
-  return { success: true, data: { profile, link } };
+  return { success: true, data: { profile, link, linked: false } };
 }
 
 /**

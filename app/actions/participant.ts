@@ -2,8 +2,12 @@
 
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createPublicClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 
+/**
+ * Get events for authenticated users (uses RLS with user context)
+ */
 export async function getParticipantEvents() {
   const supabase = await createClient()
   const { data, error } = await supabase
@@ -18,6 +22,36 @@ export async function getParticipantEvents() {
   }
 
   return { success: true, data }
+}
+
+/**
+ * Get public events for unauthenticated visitors
+ * Uses public anon key without authentication
+ * Shows active events (both upcoming and recent past events for demo purposes)
+ */
+export async function getPublicEvents() {
+  const supabase = createPublicClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+  
+  console.log('[getPublicEvents] Fetching active events for landing page')
+  
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, title, description, location, start_time, end_time, capacity, status, target_audience')
+    .eq('status', 'active')
+    .order('start_time', { ascending: false }) // Show most recent first
+    .limit(50)
+
+  console.log('[getPublicEvents] Query result - Count:', data?.length, 'Error:', error)
+  
+  if (error) {
+    console.error('Error fetching public events:', error)
+    return { success: false, error: error.message, data: [] }
+  }
+
+  return { success: true, data: data || [] }
 }
 
 export async function getParticipantEventById(id: string) {

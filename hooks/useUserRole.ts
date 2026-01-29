@@ -11,22 +11,28 @@ export const ROLE_THEMES = {
     primary: '#86B1A4',
     dark: '#6FA08F',
     light: '#E8F3F0',
+    secondary: '#B8D4CC',
     emoji: '🤝',
-    gradient: 'from-[#86B1A4] to-[#6FA08F]'
+    gradient: 'from-[#86B1A4] to-[#6FA08F]',
+    label: 'Volunteer'
   },
   caregiver: {
     primary: '#EC4899',
     dark: '#DB2777',
     light: '#FCE7F3',
+    secondary: '#F9A8D4',
     emoji: '💖',
-    gradient: 'from-[#EC4899] to-[#DB2777]'
+    gradient: 'from-[#EC4899] to-[#DB2777]',
+    label: 'Caregiver'
   },
   participant: {
     primary: '#E89D71',
     dark: '#D88C61',
     light: '#FEF3EB',
+    secondary: '#F4C4A0',
     emoji: '🧡',
-    gradient: 'from-[#E89D71] to-[#D88C61]'
+    gradient: 'from-[#E89D71] to-[#D88C61]',
+    label: 'Participant'
   }
 } as const;
 

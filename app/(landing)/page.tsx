@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
-import { getParticipantEvents } from "@/app/actions/participant";
+import { getPublicEvents } from "@/app/actions/participant";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, MapPin, ChevronRight } from "lucide-react";
 
 export default async function LandingPage() {
   const { userId, sessionClaims } = await auth();
   const role = sessionClaims?.metadata?.role;
-  const eventsRes = await getParticipantEvents();
+  const eventsRes = await getPublicEvents();
   const featuredEvents = (eventsRes.data || []).slice(0, 3);
 
   // Determine the "Get Started" destination

@@ -93,47 +93,130 @@ export default function DesignSystemPage() {
         {/* Colors */}
         <section>
           <h2 className="text-3xl font-bold text-[#2D1E17] dark:text-white mb-2">Colors</h2>
-          <p className="text-[#6B5A4E] dark:text-zinc-300 mb-8">Simple colors with clear meaning and high contrast.</p>
+          <p className="text-[#6B5A4E] dark:text-zinc-300 mb-4">Soft pastel colors for easy viewing, with role-based theming for clear visual identity.</p>
           
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold text-[#2D1E17] dark:text-white mb-4">Volunteer (Teal/Green)</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5 mb-8">
+            <h4 className="font-bold text-blue-900 mb-2">🎨 Role-Based Theming</h4>
+            <p className="text-sm text-blue-700">
+              Each portal role has a dedicated color scheme that applies to headers, navigation, buttons, and interactive elements. 
+              This provides clear visual feedback and helps users quickly identify which portal they're in.
+            </p>
+          </div>
+          
+          <div className="space-y-8">
+            {/* Volunteer Theme */}
+            <div className="bg-gradient-to-br from-white to-[#E8F3F0] rounded-3xl p-6 border-2 border-[#86B1A4]/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#86B1A4] flex items-center justify-center text-2xl shadow-lg">
+                  🤝
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-[#2D1E17]">Volunteer Theme</h3>
+                  <p className="text-sm text-[#6B5A4E]">Pastel Green - Representing growth & support</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <div className="h-24 rounded-2xl bg-[#86B1A4] shadow-lg"></div>
-                  <p className="text-sm font-medium text-[#2D1E17] dark:text-white">Primary</p>
-                  <p className="text-xs text-[#6B5A4E] dark:text-zinc-400">#86B1A4</p>
+                  <div className="h-20 rounded-xl bg-[#86B1A4] shadow-md"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Primary</p>
+                  <p className="text-xs text-[#6B5A4E]">#86B1A4</p>
+                  <p className="text-xs text-[#6B5A4E]">Headers, buttons</p>
                 </div>
                 <div className="space-y-2">
-                  <div className="h-24 rounded-2xl bg-[#6FA08F] shadow-lg"></div>
-                  <p className="text-sm font-medium text-[#2D1E17] dark:text-white">Dark</p>
-                  <p className="text-xs text-[#6B5A4E] dark:text-zinc-400">#6FA08F</p>
+                  <div className="h-20 rounded-xl bg-[#6FA08F] shadow-md"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Dark</p>
+                  <p className="text-xs text-[#6B5A4E]">#6FA08F</p>
+                  <p className="text-xs text-[#6B5A4E]">Hover states</p>
                 </div>
                 <div className="space-y-2">
-                  <div className="h-24 rounded-2xl bg-[#E8F3F0] border-2 border-zinc-200 dark:border-zinc-700"></div>
-                  <p className="text-sm font-medium text-[#2D1E17] dark:text-white">Light</p>
-                  <p className="text-xs text-[#6B5A4E] dark:text-zinc-400">#E8F3F0</p>
+                  <div className="h-20 rounded-xl bg-[#E8F3F0] border-2 border-[#86B1A4]/30"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Light</p>
+                  <p className="text-xs text-[#6B5A4E]">#E8F3F0</p>
+                  <p className="text-xs text-[#6B5A4E]">Backgrounds</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-20 rounded-xl bg-[#B8D4CC] shadow-md"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Secondary</p>
+                  <p className="text-xs text-[#6B5A4E]">#B8D4CC</p>
+                  <p className="text-xs text-[#6B5A4E]">Badges, chips</p>
                 </div>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-xl font-semibold text-[#2D1E17] dark:text-white mb-4">Participant (Warm Orange)</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {/* Caregiver Theme */}
+            <div className="bg-gradient-to-br from-white to-[#FCE7F3] rounded-3xl p-6 border-2 border-[#EC4899]/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#EC4899] flex items-center justify-center text-2xl shadow-lg">
+                  💖
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-[#2D1E17]">Caregiver Theme</h3>
+                  <p className="text-sm text-[#6B5A4E]">Pastel Pink - Representing care & compassion</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <div className="h-24 rounded-2xl bg-[#E89D71] shadow-lg"></div>
-                  <p className="text-sm font-medium text-[#2D1E17] dark:text-white">Primary</p>
-                  <p className="text-xs text-[#6B5A4E] dark:text-zinc-400">#E89D71</p>
+                  <div className="h-20 rounded-xl bg-[#EC4899] shadow-md"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Primary</p>
+                  <p className="text-xs text-[#6B5A4E]">#EC4899</p>
+                  <p className="text-xs text-[#6B5A4E]">Headers, buttons</p>
                 </div>
                 <div className="space-y-2">
-                  <div className="h-24 rounded-2xl bg-[#D88C61] shadow-lg"></div>
-                  <p className="text-sm font-medium text-[#2D1E17] dark:text-white">Dark</p>
-                  <p className="text-xs text-[#6B5A4E] dark:text-zinc-400">#D88C61</p>
+                  <div className="h-20 rounded-xl bg-[#DB2777] shadow-md"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Dark</p>
+                  <p className="text-xs text-[#6B5A4E]">#DB2777</p>
+                  <p className="text-xs text-[#6B5A4E]">Hover states</p>
                 </div>
                 <div className="space-y-2">
-                  <div className="h-24 rounded-2xl bg-[#FEF3EB] border-2 border-zinc-200 dark:border-zinc-700"></div>
-                  <p className="text-sm font-medium text-[#2D1E17] dark:text-white">Light</p>
-                  <p className="text-xs text-[#6B5A4E] dark:text-zinc-400">#FEF3EB</p>
+                  <div className="h-20 rounded-xl bg-[#FCE7F3] border-2 border-[#EC4899]/30"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Light</p>
+                  <p className="text-xs text-[#6B5A4E]">#FCE7F3</p>
+                  <p className="text-xs text-[#6B5A4E]">Backgrounds</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-20 rounded-xl bg-[#F9A8D4] shadow-md"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Secondary</p>
+                  <p className="text-xs text-[#6B5A4E]">#F9A8D4</p>
+                  <p className="text-xs text-[#6B5A4E]">Badges, chips</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Participant Theme */}
+            <div className="bg-gradient-to-br from-white to-[#FEF3EB] rounded-3xl p-6 border-2 border-[#E89D71]/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#E89D71] flex items-center justify-center text-2xl shadow-lg">
+                  🧡
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-[#2D1E17]">Participant Theme</h3>
+                  <p className="text-sm text-[#6B5A4E]">Pastel Orange - Representing warmth & inclusion</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <div className="h-20 rounded-xl bg-[#E89D71] shadow-md"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Primary</p>
+                  <p className="text-xs text-[#6B5A4E]">#E89D71</p>
+                  <p className="text-xs text-[#6B5A4E]">Headers, buttons</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-20 rounded-xl bg-[#D88C61] shadow-md"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Dark</p>
+                  <p className="text-xs text-[#6B5A4E]">#D88C61</p>
+                  <p className="text-xs text-[#6B5A4E]">Hover states</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-20 rounded-xl bg-[#FEF3EB] border-2 border-[#E89D71]/30"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Light</p>
+                  <p className="text-xs text-[#6B5A4E]">#FEF3EB</p>
+                  <p className="text-xs text-[#6B5A4E]">Backgrounds</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-20 rounded-xl bg-[#F4C4A0] shadow-md"></div>
+                  <p className="text-sm font-semibold text-[#2D1E17]">Secondary</p>
+                  <p className="text-xs text-[#6B5A4E]">#F4C4A0</p>
+                  <p className="text-xs text-[#6B5A4E]">Badges, chips</p>
                 </div>
               </div>
             </div>
