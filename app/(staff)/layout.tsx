@@ -1,6 +1,7 @@
 import * as React from "react";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { StaffLogoutButton } from "./_components/StaffLogoutButton";
 
 export default function StaffLayout({
   children,
@@ -19,17 +20,23 @@ export default function StaffLayout({
           <Link href="/staff/events" className="block px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">Events</Link>
           <Link href="/staff/participants" className="block px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">Participants</Link>
         </nav>
-        <div className="p-6 border-t border-white/10 flex items-center justify-between">
-          <UserButton afterSignOutUrl="/" />
-          <span className="text-sm font-medium opacity-60">Staff Portal</span>
+        <div className="p-6 border-t border-white/10 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <UserButton afterSignOutUrl="/sign-in" />
+            <span className="text-sm font-medium opacity-60">Staff Portal</span>
+          </div>
+          <StaffLogoutButton />
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden flex items-center justify-between p-4 bg-white border-b">
+        <header className="md:hidden flex items-center justify-between p-4 bg-white border-b gap-2">
           <h1 className="text-lg font-bold text-[#2D1E17]">Careable Staff</h1>
-          <UserButton afterSignOutUrl="/" />
+          <div className="flex items-center gap-2">
+            <StaffLogoutButton variant="header" />
+            <UserButton afterSignOutUrl="/sign-in" />
+          </div>
         </header>
         <div className="flex-1 overflow-auto p-8">
           {children}
