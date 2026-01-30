@@ -264,8 +264,13 @@ export default function OnboardingPage() {
                         placeholder="e.g., Mary Tan"
                         value={caregiverName}
                         onChange={(e) => setCaregiverName(e.target.value)}
-                        className="h-11 sm:h-12 rounded-xl border-2 text-sm sm:text-base"
-                        style={{ borderColor: '#E5E7EB', focusBorderColor: themeColor }}
+                        className="h-11 sm:h-12 rounded-xl border-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                        style={{ 
+                          borderColor: '#E5E7EB',
+                          outlineColor: themeColor
+                        }}
+                        onFocus={(e) => e.currentTarget.style.borderColor = themeColor}
+                        onBlur={(e) => e.currentTarget.style.borderColor = '#E5E7EB'}
                         required
                       />
                       <p className="text-xs text-[#6B5A4E]">The full name of your caregiver or guardian</p>
